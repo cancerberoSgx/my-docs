@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { runMigrations } from './db';
 import authRoutes from './routes/authRoutes';
-import documentRoutes from './routes/documentRoutes';
+import listRoutes from './routes/listRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -10,8 +10,8 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-app.use('/', authRoutes);
-app.use('/', documentRoutes);
+app.use('/api', authRoutes);
+app.use('/api', listRoutes);
 
 runMigrations();
 

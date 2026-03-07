@@ -102,7 +102,6 @@ Add gitignore file in both projects
 
 implement: users are able add new documents. 
 
-
 # prompt 4
 
 users can have multiple document lists. 
@@ -115,3 +114,12 @@ users can have multiple document lists.
  * users are able to edit their document lists
  * users are able to delete their document lists with the exception of the "default" one
 
+
+# prompt: 
+
+change all backend API routes to /api, example, /api/auth, /api/list, etc
+
+
+# prompt: 
+
+/api/auth endpoints works ok but /api/lists is not and returns static index.html. Can you fix it ? probably install all endpoints in same router instance ? 

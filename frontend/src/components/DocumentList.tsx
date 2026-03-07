@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
-import { getDocuments, addDocument } from '../api';
+import { getList, addDocument, Doc } from '../api';
 import { useAuthStore } from '../store';
 
-interface Doc {
-  id: number;
-  userId: number;
-  url: string;
-  platform: string;
+interface Props {
+  listId: number;
+  listName: string;
+  onBack: () => void;
 }
 
-export default function DocumentList() {
+export default function DocumentList({ listId, listName, onBack }: Props) {
   const token = useAuthStore((s) => s.token)!;
   const clearToken = useAuthStore((s) => s.clearToken);
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -36,7 +35,7 @@ export default function DocumentList() {
     if (!url) return;
     setAdding(true);
     setAddError('');
-    addDocument(token, url, detectPlatform(url))
+    addDocument(token, listId, url, detectPlatform(url))
       .then((doc) => {
         setDocs((prev) => [doc, ...prev]);
         setNewUrl('');
@@ -46,8 +45,9 @@ export default function DocumentList() {
   }
 
   useEffect(() => {
-    getDocuments(token)
-      .then(setDocs)
+    setLoading(true);
+    getList(token, listId)
+      .then((data) => setDocs(data.documents))
       .catch((err) => {
         if (err.message === 'Unauthorized' || err.message === 'Invalid or expired token') {
           clearToken();
@@ -56,13 +56,18 @@ export default function DocumentList() {
         }
       })
       .finally(() => setLoading(false));
-  }, [token, clearToken]);
+  }, [token, listId, clearToken]);
 
   return (
     <div className="min-h-screen bg-base-200 px-4 py-8">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">My Documents</h1>
+          <div className="flex items-center gap-3">
+            <button className="btn btn-ghost btn-sm" onClick={onBack}>
+              ← Back
+            </button>
+            <h1 className="text-2xl font-bold">{listName}</h1>
+          </div>
           <button className="btn btn-ghost btn-sm" onClick={clearToken}>
             Sign out
           </button>

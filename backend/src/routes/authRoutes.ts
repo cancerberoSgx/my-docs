@@ -40,8 +40,11 @@ router.post('/register', (req: Request, res: Response): void => {
 
   const hashed = bcrypt.hashSync(password, 10);
   const result = db.prepare('INSERT INTO users (email, password, role) VALUES (?, ?, ?)').run(email, hashed, 'user');
+  const userId = Number(result.lastInsertRowid);
 
-  const token = signToken({ userId: Number(result.lastInsertRowid), email, role: 'user' });
+  db.prepare('INSERT INTO lists (name, description, userId) VALUES (?, ?, ?)').run('default', 'Default list', userId);
+
+  const token = signToken({ userId, email, role: 'user' });
   res.status(201).json({ token });
 });
 
