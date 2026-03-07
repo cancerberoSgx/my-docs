@@ -1,0 +1,1 @@
+see prompts/prompt1.md for information about this project based on requirement prompts.

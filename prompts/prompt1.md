@@ -123,3 +123,10 @@ change all backend API routes to /api, example, /api/auth, /api/list, etc
 # prompt: 
 
 /api/auth endpoints works ok but /api/lists is not and returns static index.html. Can you fix it ? probably install all endpoints in same router instance ? 
+
+# prompt
+
+remove everything related to documentRoutes in code, endpoints and frontend
+
+
+# prompt

@@ -67,18 +67,6 @@ Sign in with an existing account.
 
 **Response 401:** invalid credentials.
 
----
-
-### GET /documents
-
-List documents belonging to the authenticated user.
-
-**Header:** `Authorization: Bearer <token>`
-
-**Response 200:** `[{ "id", "userId", "url", "platform" }]`
-
-**Response 401:** missing or invalid token.
-
 ## Default user
 
 | Email                 | Password   | Role  |

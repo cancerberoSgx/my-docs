@@ -1,13 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export interface Document {
-  id: number;
-  userId: number;
-  url: string;
-  platform: string;
-}
-
 interface AuthState {
   token: string | null;
   setToken: (token: string) => void;
