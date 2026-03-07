@@ -145,13 +145,22 @@ document type is inferred by the backend in an endpoint get /documentType?url=do
 Implement the "youtube" document type and store/serve the youtubeImage favicon as static asset in the /frontend project
 when creating a new document the frontend first calls this endpoint before user can hit "save" so the type is displayed to the user before it's saved
 
-# prompts
+# prompts routes
 
 use a library like react-router or recommend one so each screen has its own url. So I can share with others urls of:
  * my lists
  * a particular list of documents
 
 
-# prompt
+# prompt apidocs
 
-pick the right library so we can generate API reference documentation. there's a npm run apidocs script that generates HTML version of api docs. Serve this HTML in /apidocs endpoint
+in backend, pick the right library so we can generate API reference documentation. there's a npm run apidocs script that generates HTML version of api 
+docs. Serve this HTML in /apidocs endpoint
+
+
+# prompt backend-architecture
+
+in backend, instead of implementing everything in the routes I want the following architecture (example for "lists"): 
+listsRoutes -> takes care of validating parameters and user permissions
+listsService -> manage the logic, for example calling listsRepository.get()
+listsRepository -> manage database access. Contains the DB typescript types
