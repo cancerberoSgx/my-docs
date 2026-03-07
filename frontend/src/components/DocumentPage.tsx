@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, Doc } from '../api';
+import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, Doc, DocumentStatus } from '../api';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
 import { StatusBadge } from './StatusBadge';
@@ -24,8 +24,19 @@ export default function DocumentPage() {
 
   const [status, setStatus] = useState('');
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [resolvedMimetype, setResolvedMimetype] = useState<string | null>(null);
+  const [resolvedExtra, setResolvedExtra] = useState<Record<string, unknown> | null>(null);
   const [preparing, setPreparing] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function applyStatus(s: DocumentStatus) {
+    setStatus(s.status);
+    setStatusError(s.status_change_error);
+    setResolvedUrl(s.resolved_url);
+    setResolvedMimetype(s.resolved_mimetype);
+    setResolvedExtra(s.resolved_extra);
+  }
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -42,6 +53,8 @@ export default function DocumentPage() {
         setTypeImage(d.type_image);
         setStatus(d.status);
         setStatusError(d.status_change_error);
+        // fetch resolved data from status history
+        return getDocumentStatus(token, d.id).then(applyStatus).catch(() => {});
       })
       .catch((err) => {
         if (err.message === 'Unauthorized' || err.message === 'Invalid or expired token') {
@@ -75,10 +88,7 @@ export default function DocumentPage() {
     }
     pollRef.current = setInterval(() => {
       getDocumentStatus(token, Number(docId))
-        .then(({ status: s, status_change_error: e }) => {
-          setStatus(s);
-          setStatusError(e);
-        })
+        .then(applyStatus)
         .catch(() => {});
     }, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
@@ -87,7 +97,7 @@ export default function DocumentPage() {
   function handlePrepare() {
     setPreparing(true);
     triggerDocumentAction(token, Number(docId), 'load')
-      .then(({ status: s }) => setStatus(s))
+      .then(({ status: s }) => { setStatus(s); })
       .catch((err) => setStatusError(err.message))
       .finally(() => setPreparing(false));
   }
@@ -170,6 +180,19 @@ export default function DocumentPage() {
             </div>
             {status === 'error' && statusError && (
               <p className="text-error text-xs">{statusError}</p>
+            )}
+            {status === 'ready' && resolvedUrl && (
+              <div className="text-xs text-base-content/60 flex flex-col gap-0.5">
+                <a href={resolvedUrl} target="_blank" rel="noreferrer" className="link link-primary truncate">
+                  {resolvedUrl}
+                </a>
+                {resolvedMimetype && <span>{resolvedMimetype}</span>}
+                {resolvedExtra && Object.keys(resolvedExtra).length > 0 && (
+                  <pre className="bg-base-200 rounded p-2 text-xs overflow-x-auto">
+                    {JSON.stringify(resolvedExtra, null, 2)}
+                  </pre>
+                )}
+              </div>
             )}
 
             <form onSubmit={handleSave} className="flex flex-col gap-4">

@@ -123,8 +123,16 @@ export function updateDocument(
   });
 }
 
+export interface DocumentStatus {
+  status: string;
+  status_change_error: string | null;
+  resolved_url: string | null;
+  resolved_mimetype: string | null;
+  resolved_extra: Record<string, unknown> | null;
+}
+
 export function getDocumentStatus(token: string, docId: number) {
-  return request<{ status: string; status_change_error: string | null }>(`/documents/${docId}/status`, {
+  return request<DocumentStatus>(`/documents/${docId}/status`, {
     headers: authHeaders(token),
   });
 }

@@ -89,16 +89,46 @@ export async function createDocument(
   return rows[0];
 }
 
-export async function setDocumentStatus(id: number, status: string, error: string | null): Promise<void> {
+export interface DocumentStatusResult {
+  status: string;
+  status_change_error: string | null;
+  resolved_url: string | null;
+  resolved_mimetype: string | null;
+  resolved_extra: object | null;
+}
+
+export async function recordStatusChange(
+  id: number,
+  status: string,
+  error: string | null,
+  resolvedUrl?: string | null,
+  resolvedMimetype?: string | null,
+  resolvedExtra?: object | null,
+): Promise<void> {
   await db.query(
     'UPDATE documents SET status = $1, status_change_error = $2 WHERE id = $3',
     [status, error, id]
   );
+  await db.query(
+    `INSERT INTO document_status_history (document_id, status, resolved_url, resolved_mimetype, resolved_extra)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [id, status, resolvedUrl ?? null, resolvedMimetype ?? null, resolvedExtra ?? null]
+  );
 }
 
-export async function getDocumentStatus(id: number, userId: number): Promise<Pick<Doc, 'status' | 'status_change_error'> | null> {
-  const { rows } = await db.query<Pick<Doc, 'status' | 'status_change_error'>>(
-    'SELECT status, status_change_error FROM documents WHERE id = $1 AND user_id = $2',
+export async function getDocumentStatus(id: number, userId: number): Promise<DocumentStatusResult | null> {
+  const { rows } = await db.query<DocumentStatusResult>(
+    `SELECT d.status, d.status_change_error,
+            h.resolved_url, h.resolved_mimetype, h.resolved_extra
+     FROM documents d
+     LEFT JOIN LATERAL (
+       SELECT resolved_url, resolved_mimetype, resolved_extra
+       FROM document_status_history
+       WHERE document_id = d.id
+       ORDER BY created_at DESC
+       LIMIT 1
+     ) h ON true
+     WHERE d.id = $1 AND d.user_id = $2`,
     [id, userId]
   );
   return rows[0] ?? null;

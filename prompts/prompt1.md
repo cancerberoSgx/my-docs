@@ -233,3 +233,23 @@ in the document page, there's a "prepare" button which triggers PUT /document/:d
 by default all youtube documents status are in "empty"
 in backend, implement a dummy status manager for youtube type which triggers an async function that first sets the status to "pending" and after 10 seconds changes to "ready"
 if the status change handler fails, we store exception msg in a new  statusChangeError text column. If it does not fail, we empty that column
+
+
+# prompt document status history
+
+get status operation returns an object like:
+{
+  url: string
+  mimetype: string
+  extra: arbitrary-json-object
+}
+in general types like youtube will result on a url to play the video and mimetype but in extra other type integrations could return more info
+
+each time a document status change, we want to store this result in an associated db table documentStatusHistory with columns:
+id: (pk) 
+documentId (fk)
+status: status-str
+createdAt: timestamp
+resolved_url: string
+resolved_mimetype: string
+resolved_extra: jsonb

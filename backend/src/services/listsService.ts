@@ -1,7 +1,7 @@
 import { AppError } from '../errors';
 import * as listsRepo from '../repositories/listsRepository';
 import * as youtubeStatusManager from './youtubeStatusManager';
-import type { List, Doc } from '../repositories/listsRepository';
+import type { List, Doc, DocumentStatusResult } from '../repositories/listsRepository';
 
 const VALID_ORDER_COLS = ['name', 'created_at', 'updated_at'];
 
@@ -72,7 +72,7 @@ export async function updateDocument(
 export async function getDocumentStatus(
   docId: number,
   userId: number,
-): Promise<{ status: string; status_change_error: string | null }> {
+): Promise<DocumentStatusResult> {
   const row = await listsRepo.getDocumentStatus(docId, userId);
   if (!row) throw new AppError(404, 'Document not found');
   return row;
