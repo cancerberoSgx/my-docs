@@ -1,7 +1,5 @@
 # prompt 1
 
-## prompt 
-
 Please create a fullstack application. This folder will contain two sub folders backend and frontend.
 
 Backend project:
@@ -104,9 +102,16 @@ Add gitignore file in both projects
 
 implement: users are able add new documents. 
 
-Add the following information to DB tables, endpoints API and also reflect this information on the frontend
 
- * db users table new columns: 
-   * createdAt: timestamp
-   * updatedAt: timestamp
- * db documents table new columns
+# prompt 4
+
+users can have multiple document lists. 
+ * Create a "lists" db table with columns name and description, createdAt, updatedAt. and userId (pk) which is associated with a user and a relationship 
+ * create table lists_documents which associate list with documents
+ * POST /documents now convert to post /lists/{listId}/documents
+ * GET /documents now converts to GET /lists/{listId}
+ + every user (new users) has a "default" list by default
+ * Users are able to see their document lists, filter them by name and order by name, createdAt, updatedAt
+ * users are able to edit their document lists
+ * users are able to delete their document lists with the exception of the "default" one
+

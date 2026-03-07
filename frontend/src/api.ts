@@ -28,3 +28,11 @@ export function getDocuments(token: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export function addDocument(token: string, url: string, platform: string) {
+  return request<{ id: number; userId: number; url: string; platform: string }>('/documents', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ url, platform }),
+  });
+}

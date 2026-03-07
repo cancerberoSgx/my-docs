@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getDocuments } from '../api';
+import { getDocuments, addDocument } from '../api';
 import { useAuthStore } from '../store';
 
 interface Doc {
@@ -15,6 +15,35 @@ export default function DocumentList() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [newUrl, setNewUrl] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
+
+  function detectPlatform(url: string): string {
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, '');
+      if (host.includes('youtube.com') || host === 'youtu.be') return 'youtube';
+      if (host.includes('vimeo.com')) return 'vimeo';
+      return host.split('.')[0];
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const url = newUrl.trim();
+    if (!url) return;
+    setAdding(true);
+    setAddError('');
+    addDocument(token, url, detectPlatform(url))
+      .then((doc) => {
+        setDocs((prev) => [doc, ...prev]);
+        setNewUrl('');
+      })
+      .catch((err) => setAddError(err.message))
+      .finally(() => setAdding(false));
+  }
 
   useEffect(() => {
     getDocuments(token)
@@ -38,6 +67,26 @@ export default function DocumentList() {
             Sign out
           </button>
         </div>
+
+        <form onSubmit={handleAdd} className="flex gap-2 mb-6">
+          <input
+            type="url"
+            className="input input-bordered flex-1"
+            placeholder="Paste a video URL…"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            disabled={adding}
+          />
+          <button type="submit" className="btn btn-primary" disabled={adding || !newUrl.trim()}>
+            {adding ? <span className="loading loading-spinner loading-sm" /> : 'Add'}
+          </button>
+        </form>
+
+        {addError && (
+          <div className="alert alert-error mb-4">
+            <span>{addError}</span>
+          </div>
+        )}
 
         {loading && (
           <div className="flex justify-center py-12">
