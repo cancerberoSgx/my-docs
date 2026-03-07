@@ -168,7 +168,7 @@ listsRepository -> manage database access. Contains the DB typescript types
 
 
 
-# api integration tests
+# prompt: api integration tests
 
 I need to have backend API integration tests that for example, create users, lists, documents and check for permissions, services etc. Can you implement this with this first tests ? : 
  * tests must be all under /test folder
@@ -182,8 +182,14 @@ I need to have backend API integration tests that for example, create users, lis
 
 ideas / future:
 
-# prompt document page
+# prompt: document page
 
-add the following information in documents:
+add the following features about documents:
 
- * description text
+ * description text optional
+ * type (one of youtube, webpage )
+ * type_image text optional
+  * when document is created, the frontend needs to send the type_image path inferred
+* UI: tjhere's an add-document "+" button that asks for url, description and shows the document type feedback in a modal or a separate document-edit-page
+* in the doc lists when I click a document I'm taken to that document document-edit page where I can see doc info or edit it.
+* the document-page must have a shareable url

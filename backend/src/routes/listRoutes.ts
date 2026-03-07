@@ -89,7 +89,7 @@ function handleError(res: Response, err: unknown): void {
  *                   example: youtube
  */
 router.get('/documentType', (req: Request, res: Response): void => {
-  res.json({ type: listsService.getDocumentType(String(req.query.url || '')) });
+  res.json(listsService.detectDocumentType(String(req.query.url || '')));
 });
 
 /**
@@ -355,7 +355,7 @@ router.delete('/lists/:listId', requireAuth, async (req: Request, res: Response)
  */
 router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
-  const { url, platform, type } = req.body;
+  const { url, platform, type, description, type_image } = req.body;
   if (!url || typeof url !== 'string' || !url.trim()) {
     res.status(400).json({ error: 'url is required' });
     return;
@@ -366,7 +366,116 @@ router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: R
   }
   try {
     res.status(201).json(
-      await listsService.addDocumentToList(Number(req.params.listId), user.userId, url.trim(), platform.trim(), type || 'unknown')
+      await listsService.addDocumentToList(
+        Number(req.params.listId),
+        user.userId,
+        url.trim(),
+        platform.trim(),
+        type || 'webpage',
+        description?.trim() || null,
+        type_image || null,
+      )
+    );
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+/**
+ * @openapi
+ * /documents/{docId}:
+ *   get:
+ *     tags: [Documents]
+ *     summary: Get a single document
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: docId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       '200':
+ *         description: Document
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Doc'
+ *       '401':
+ *         description: Unauthorized
+ *       '404':
+ *         description: Document not found
+ */
+router.get('/documents/:docId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const user = (req as AuthRequest).user;
+  try {
+    res.json(await listsService.getDocument(Number(req.params.docId), user.userId));
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+/**
+ * @openapi
+ * /documents/{docId}:
+ *   put:
+ *     tags: [Documents]
+ *     summary: Update a document
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: docId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [url, type]
+ *             properties:
+ *               url:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [youtube, webpage]
+ *               type_image:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Updated document
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Doc'
+ *       '400':
+ *         description: Missing url
+ *       '401':
+ *         description: Unauthorized
+ *       '404':
+ *         description: Document not found
+ */
+router.put('/documents/:docId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const user = (req as AuthRequest).user;
+  const { url, description, type, type_image } = req.body;
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    res.status(400).json({ error: 'url is required' });
+    return;
+  }
+  try {
+    res.json(
+      await listsService.updateDocument(Number(req.params.docId), user.userId, {
+        url: url.trim(),
+        description: description?.trim() || null,
+        type: type || 'webpage',
+        type_image: type_image || null,
+      })
     );
   } catch (err) {
     handleError(res, err);

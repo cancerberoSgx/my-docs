@@ -15,6 +15,8 @@ export interface Doc {
   url: string;
   platform: string;
   type: string;
+  description: string | null;
+  type_image: string | null;
 }
 
 async function getById(id: number): Promise<List | null> {
@@ -68,10 +70,17 @@ export function deleteList(id: number): Promise<void> {
   return db.query('DELETE FROM lists WHERE id = $1', [id]).then(() => {});
 }
 
-export async function createDocument(userId: number, url: string, platform: string, type: string): Promise<Doc> {
+export async function createDocument(
+  userId: number,
+  url: string,
+  platform: string,
+  type: string,
+  description: string | null,
+  type_image: string | null,
+): Promise<Doc> {
   const { rows: [{ id }] } = await db.query<{ id: number }>(
-    'INSERT INTO documents (user_id, url, platform, type) VALUES ($1, $2, $3, $4) RETURNING id',
-    [userId, url, platform, type]
+    'INSERT INTO documents (user_id, url, platform, type, description, type_image) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+    [userId, url, platform, type, description, type_image]
   );
   const { rows } = await db.query<Doc>('SELECT * FROM documents WHERE id = $1', [id]);
   return rows[0];
@@ -82,4 +91,24 @@ export function addDocumentToList(listId: number, documentId: number): Promise<v
     'INSERT INTO lists_documents (list_id, document_id) VALUES ($1, $2)',
     [listId, documentId]
   ).then(() => {});
+}
+
+export async function getDocumentById(id: number, userId: number): Promise<Doc | null> {
+  const { rows } = await db.query<Doc>(
+    'SELECT * FROM documents WHERE id = $1 AND user_id = $2',
+    [id, userId]
+  );
+  return rows[0] ?? null;
+}
+
+export async function updateDocument(
+  id: number,
+  data: { url: string; description: string | null; type: string; type_image: string | null },
+): Promise<Doc> {
+  await db.query(
+    'UPDATE documents SET url = $1, description = $2, type = $3, type_image = $4 WHERE id = $5',
+    [data.url, data.description, data.type, data.type_image, id]
+  );
+  const { rows } = await db.query<Doc>('SELECT * FROM documents WHERE id = $1', [id]);
+  return rows[0];
 }

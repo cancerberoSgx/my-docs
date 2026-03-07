@@ -2,25 +2,110 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getList, addDocument, getDocumentType, Doc } from '../api';
 import { useAuthStore } from '../store';
+import { DocTypeBadge } from './DocTypeIcon';
 
-function DocTypeIcon({ type }: { type: string }) {
-  if (type === 'youtube') {
-    return <img src="/icons/youtube.svg" alt="YouTube" className="w-4 h-4 inline-block" />;
+function AddDocumentModal({
+  listId,
+  onAdded,
+  onClose,
+}: {
+  listId: number;
+  onAdded: (doc: Doc) => void;
+  onClose: () => void;
+}) {
+  const token = useAuthStore((s) => s.token)!;
+  const [url, setUrl] = useState('');
+  const [description, setDescription] = useState('');
+  const [detectedType, setDetectedType] = useState<string | null>(null);
+  const [detectedTypeImage, setDetectedTypeImage] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setDetectedType(null);
+      setDetectedTypeImage(null);
+      setDetecting(false);
+      return;
+    }
+    setDetecting(true);
+    setDetectedType(null);
+    const timer = setTimeout(() => {
+      getDocumentType(trimmed)
+        .then(({ type, type_image }) => {
+          setDetectedType(type);
+          setDetectedTypeImage(type_image);
+        })
+        .catch(() => { setDetectedType('webpage'); setDetectedTypeImage('/icons/webpage.svg'); })
+        .finally(() => setDetecting(false));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [url]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl || detectedType === null) return;
+    setAdding(true);
+    setError('');
+    addDocument(token, listId, trimmedUrl, detectedType, detectedType, description.trim() || null, detectedTypeImage)
+      .then((doc) => { onAdded(doc); onClose(); })
+      .catch((err) => setError(err.message))
+      .finally(() => setAdding(false));
   }
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20" />
-    </svg>
-  );
-}
 
-function DocTypeBadge({ type }: { type: string }) {
   return (
-    <span className="inline-flex items-center gap-1 badge badge-outline">
-      <DocTypeIcon type={type} />
-      {type}
-    </span>
+    <div className="modal modal-open">
+      <div className="modal-box">
+        <h3 className="font-bold text-lg mb-4">Add document</h3>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <input
+              type="url"
+              className="input input-bordered w-full"
+              placeholder="https://…"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              disabled={adding}
+              autoFocus
+            />
+            <div className="mt-2 h-6 flex items-center gap-2">
+              {detecting && <span className="loading loading-spinner loading-xs" />}
+              {detectedType !== null && (
+                <DocTypeBadge type={detectedType} type_image={detectedTypeImage} />
+              )}
+            </div>
+          </div>
+
+          <textarea
+            className="textarea textarea-bordered w-full"
+            placeholder="Description (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={adding}
+            rows={2}
+          />
+
+          {error && <p className="text-error text-sm">{error}</p>}
+
+          <div className="modal-action mt-0">
+            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={adding}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={adding || !url.trim() || detecting || detectedType === null}
+            >
+              {adding ? <span className="loading loading-spinner loading-sm" /> : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+      <div className="modal-backdrop" onClick={onClose} />
+    </div>
   );
 }
 
@@ -34,45 +119,7 @@ export default function DocumentList() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [newUrl, setNewUrl] = useState('');
-  const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState('');
-  const [detectedType, setDetectedType] = useState<string | null>(null);
-  const [detecting, setDetecting] = useState(false);
-
-  useEffect(() => {
-    const url = newUrl.trim();
-    if (!url) {
-      setDetectedType(null);
-      setDetecting(false);
-      return;
-    }
-    setDetecting(true);
-    setDetectedType(null);
-    const timer = setTimeout(() => {
-      getDocumentType(url)
-        .then(({ type }) => setDetectedType(type))
-        .catch(() => setDetectedType('unknown'))
-        .finally(() => setDetecting(false));
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [newUrl]);
-
-  function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    const url = newUrl.trim();
-    if (!url || detectedType === null) return;
-    setAdding(true);
-    setAddError('');
-    addDocument(token, listId, url, detectedType, detectedType)
-      .then((doc) => {
-        setDocs((prev) => [doc, ...prev]);
-        setNewUrl('');
-        setDetectedType(null);
-      })
-      .catch((err) => setAddError(err.message))
-      .finally(() => setAdding(false));
-  }
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -101,42 +148,15 @@ export default function DocumentList() {
             </button>
             <h1 className="text-2xl font-bold">{listName}</h1>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={clearToken}>
-            Sign out
-          </button>
-        </div>
-
-        <form onSubmit={handleAdd} className="mb-6">
           <div className="flex gap-2">
-            <input
-              type="url"
-              className="input input-bordered flex-1"
-              placeholder="Paste a URL…"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              disabled={adding}
-            />
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={adding || !newUrl.trim() || detecting || detectedType === null}
-            >
-              {adding ? <span className="loading loading-spinner loading-sm" /> : 'Add'}
+            <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+              + Add
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={clearToken}>
+              Sign out
             </button>
           </div>
-          {newUrl.trim() && (
-            <div className="mt-2 h-6 flex items-center">
-              {detecting && <span className="loading loading-spinner loading-xs mr-2" />}
-              {detectedType !== null && <DocTypeBadge type={detectedType} />}
-            </div>
-          )}
-        </form>
-
-        {addError && (
-          <div className="alert alert-error mb-4">
-            <span>{addError}</span>
-          </div>
-        )}
+        </div>
 
         {loading && (
           <div className="flex justify-center py-12">
@@ -144,16 +164,12 @@ export default function DocumentList() {
           </div>
         )}
 
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
-          </div>
-        )}
+        {error && <div className="alert alert-error"><span>{error}</span></div>}
 
         {!loading && !error && docs.length === 0 && (
           <div className="card bg-base-100 shadow">
             <div className="card-body items-center text-center text-base-content/60">
-              <p>No documents yet.</p>
+              <p>No documents yet. Hit <strong>+ Add</strong> to get started.</p>
             </div>
           </div>
         )}
@@ -161,25 +177,35 @@ export default function DocumentList() {
         {!loading && docs.length > 0 && (
           <div className="flex flex-col gap-3">
             {docs.map((doc) => (
-              <div key={doc.id} className="card bg-base-100 shadow">
+              <button
+                key={doc.id}
+                className="card bg-base-100 shadow text-left w-full hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/lists/${listId}/documents/${doc.id}`)}
+              >
                 <div className="card-body py-4">
-                  <div className="flex items-center gap-3">
-                    <DocTypeBadge type={doc.type || 'unknown'} />
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="link link-primary truncate text-sm"
-                    >
-                      {doc.url}
-                    </a>
+                  <div className="flex items-start gap-3">
+                    <DocTypeBadge type={doc.type || 'webpage'} type_image={doc.type_image} />
+                    <div className="min-w-0">
+                      <p className="text-sm truncate text-primary">{doc.url}</p>
+                      {doc.description && (
+                        <p className="text-xs text-base-content/60 mt-0.5 line-clamp-2">{doc.description}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
       </div>
+
+      {showModal && (
+        <AddDocumentModal
+          listId={listId}
+          onAdded={(doc) => setDocs((prev) => [doc, ...prev])}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }

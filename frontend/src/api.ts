@@ -34,10 +34,12 @@ export interface DocList {
 
 export interface Doc {
   id: number;
-  userId: number;
+  user_id: number;
   url: string;
   platform: string;
   type: string;
+  description: string | null;
+  type_image: string | null;
 }
 
 function authHeaders(token: string) {
@@ -82,13 +84,39 @@ export function getList(token: string, listId: number) {
 }
 
 export function getDocumentType(url: string) {
-  return request<{ type: string }>(`/documentType?url=${encodeURIComponent(url)}`);
+  return request<{ type: string; type_image: string }>(`/documentType?url=${encodeURIComponent(url)}`);
 }
 
-export function addDocument(token: string, listId: number, url: string, platform: string, type: string) {
+export function addDocument(
+  token: string,
+  listId: number,
+  url: string,
+  platform: string,
+  type: string,
+  description: string | null,
+  type_image: string | null,
+) {
   return request<Doc>(`/lists/${listId}/documents`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ url, platform, type }),
+    body: JSON.stringify({ url, platform, type, description, type_image }),
+  });
+}
+
+export function getDocument(token: string, docId: number) {
+  return request<Doc>(`/documents/${docId}`, {
+    headers: authHeaders(token),
+  });
+}
+
+export function updateDocument(
+  token: string,
+  docId: number,
+  data: { url: string; description: string | null; type: string; type_image: string | null },
+) {
+  return request<Doc>(`/documents/${docId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify(data),
   });
 }

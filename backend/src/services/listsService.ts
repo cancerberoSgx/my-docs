@@ -41,19 +41,37 @@ export async function addDocumentToList(
   url: string,
   platform: string,
   type: string,
+  description: string | null,
+  type_image: string | null,
 ): Promise<Doc> {
   const list = await listsRepo.getListById(listId, userId);
   if (!list) throw new AppError(404, 'List not found');
-  const doc = await listsRepo.createDocument(userId, url, platform, type);
+  const doc = await listsRepo.createDocument(userId, url, platform, type, description, type_image);
   await listsRepo.addDocumentToList(listId, doc.id);
   return doc;
 }
 
-export function getDocumentType(url: string): string {
+export async function getDocument(docId: number, userId: number): Promise<Doc> {
+  const doc = await listsRepo.getDocumentById(docId, userId);
+  if (!doc) throw new AppError(404, 'Document not found');
+  return doc;
+}
+
+export async function updateDocument(
+  docId: number,
+  userId: number,
+  data: { url: string; description: string | null; type: string; type_image: string | null },
+): Promise<Doc> {
+  const doc = await listsRepo.getDocumentById(docId, userId);
+  if (!doc) throw new AppError(404, 'Document not found');
+  return listsRepo.updateDocument(docId, data);
+}
+
+export function detectDocumentType(url: string): { type: string; type_image: string } {
+  let type = 'webpage';
   try {
     const host = new URL(url).hostname.replace(/^www\./, '');
-    return host.includes('youtube.com') || host === 'youtu.be' ? 'youtube' : 'unknown';
-  } catch {
-    return 'unknown';
-  }
+    if (host.includes('youtube.com') || host === 'youtu.be') type = 'youtube';
+  } catch { /* keep webpage */ }
+  return { type, type_image: type === 'youtube' ? '/icons/youtube.svg' : '/icons/webpage.svg' };
 }
