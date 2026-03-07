@@ -141,4 +141,6 @@ use docker for local development so there's sh command that starts a postgres se
 New feature: document type
 there's a new "type" column in "documents" table . A document could be just a web page, an uploaded document, a youtube vide taken from its url, an mcp server, etc. 
 When user creates or view a document the document type is shown together with it icon
+document type is inferred by the backend in an endpoint get /documentType?url=docUrl . if domain is youtube.com it returns "youtube" if not it returns "unknown"
 Implement the "youtube" document type and store/serve the youtubeImage favicon as static asset in the /frontend project
+when creating a new document the frontend first calls this endpoint before user can hit "save" so the type is displayed to the user before it's saved

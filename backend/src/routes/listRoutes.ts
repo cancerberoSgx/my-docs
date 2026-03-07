@@ -6,6 +6,18 @@ const router = Router();
 
 type AuthRequest = Request & { user: JwtPayload };
 
+// GET /documentType?url=...
+router.get('/documentType', (req: Request, res: Response): void => {
+  const url = String(req.query.url || '');
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    const type = host.includes('youtube.com') || host === 'youtu.be' ? 'youtube' : 'unknown';
+    res.json({ type });
+  } catch {
+    res.json({ type: 'unknown' });
+  }
+});
+
 // GET /lists?orderBy=name|created_at|updated_at&order=asc|desc
 router.get('/lists', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
@@ -129,7 +141,7 @@ router.delete('/lists/:listId', requireAuth, async (req: Request, res: Response)
 router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const listId = Number(req.params.listId);
-  const { url, platform } = req.body;
+  const { url, platform, type } = req.body;
 
   const { rows: listRows } = await db.query(
     'SELECT * FROM lists WHERE id = $1 AND user_id = $2',
@@ -151,8 +163,8 @@ router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: R
   }
 
   const { rows: docRows } = await db.query(
-    'INSERT INTO documents (user_id, url, platform) VALUES ($1, $2, $3) RETURNING id',
-    [user.userId, url.trim(), platform.trim()]
+    'INSERT INTO documents (user_id, url, platform, type) VALUES ($1, $2, $3, $4) RETURNING id',
+    [user.userId, url.trim(), platform.trim(), type || 'unknown']
   );
   const docId = docRows[0].id;
 

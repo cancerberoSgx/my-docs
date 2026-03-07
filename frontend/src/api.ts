@@ -37,6 +37,7 @@ export interface Doc {
   userId: number;
   url: string;
   platform: string;
+  type: string;
 }
 
 function authHeaders(token: string) {
@@ -80,10 +81,14 @@ export function getList(token: string, listId: number) {
   });
 }
 
-export function addDocument(token: string, listId: number, url: string, platform: string) {
+export function getDocumentType(url: string) {
+  return request<{ type: string }>(`/documentType?url=${encodeURIComponent(url)}`);
+}
+
+export function addDocument(token: string, listId: number, url: string, platform: string, type: string) {
   return request<Doc>(`/lists/${listId}/documents`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ url, platform }),
+    body: JSON.stringify({ url, platform, type }),
   });
 }

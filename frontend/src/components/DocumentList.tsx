@@ -1,11 +1,32 @@
 import { useEffect, useState } from 'react';
-import { getList, addDocument, Doc } from '../api';
+import { getList, addDocument, getDocumentType, Doc } from '../api';
 import { useAuthStore } from '../store';
 
 interface Props {
   listId: number;
   listName: string;
   onBack: () => void;
+}
+
+function DocTypeIcon({ type }: { type: string }) {
+  if (type === 'youtube') {
+    return <img src="/icons/youtube.svg" alt="YouTube" className="w-4 h-4 inline-block" />;
+  }
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20" />
+    </svg>
+  );
+}
+
+function DocTypeBadge({ type }: { type: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 badge badge-outline">
+      <DocTypeIcon type={type} />
+      {type}
+    </span>
+  );
 }
 
 export default function DocumentList({ listId, listName, onBack }: Props) {
@@ -17,28 +38,38 @@ export default function DocumentList({ listId, listName, onBack }: Props) {
   const [newUrl, setNewUrl] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
+  const [detectedType, setDetectedType] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
 
-  function detectPlatform(url: string): string {
-    try {
-      const host = new URL(url).hostname.replace(/^www\./, '');
-      if (host.includes('youtube.com') || host === 'youtu.be') return 'youtube';
-      if (host.includes('vimeo.com')) return 'vimeo';
-      return host.split('.')[0];
-    } catch {
-      return 'unknown';
+  useEffect(() => {
+    const url = newUrl.trim();
+    if (!url) {
+      setDetectedType(null);
+      setDetecting(false);
+      return;
     }
-  }
+    setDetecting(true);
+    setDetectedType(null);
+    const timer = setTimeout(() => {
+      getDocumentType(url)
+        .then(({ type }) => setDetectedType(type))
+        .catch(() => setDetectedType('unknown'))
+        .finally(() => setDetecting(false));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [newUrl]);
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     const url = newUrl.trim();
-    if (!url) return;
+    if (!url || detectedType === null) return;
     setAdding(true);
     setAddError('');
-    addDocument(token, listId, url, detectPlatform(url))
+    addDocument(token, listId, url, detectedType, detectedType)
       .then((doc) => {
         setDocs((prev) => [doc, ...prev]);
         setNewUrl('');
+        setDetectedType(null);
       })
       .catch((err) => setAddError(err.message))
       .finally(() => setAdding(false));
@@ -73,18 +104,30 @@ export default function DocumentList({ listId, listName, onBack }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleAdd} className="flex gap-2 mb-6">
-          <input
-            type="url"
-            className="input input-bordered flex-1"
-            placeholder="Paste an URL…"
-            value={newUrl}
-            onChange={(e) => setNewUrl(e.target.value)}
-            disabled={adding}
-          />
-          <button type="submit" className="btn btn-primary" disabled={adding || !newUrl.trim()}>
-            {adding ? <span className="loading loading-spinner loading-sm" /> : 'Add'}
-          </button>
+        <form onSubmit={handleAdd} className="mb-6">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              className="input input-bordered flex-1"
+              placeholder="Paste a URL…"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              disabled={adding}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={adding || !newUrl.trim() || detecting || detectedType === null}
+            >
+              {adding ? <span className="loading loading-spinner loading-sm" /> : 'Add'}
+            </button>
+          </div>
+          {newUrl.trim() && (
+            <div className="mt-2 h-6 flex items-center">
+              {detecting && <span className="loading loading-spinner loading-xs mr-2" />}
+              {detectedType !== null && <DocTypeBadge type={detectedType} />}
+            </div>
+          )}
         </form>
 
         {addError && (
@@ -119,7 +162,7 @@ export default function DocumentList({ listId, listName, onBack }: Props) {
               <div key={doc.id} className="card bg-base-100 shadow">
                 <div className="card-body py-4">
                   <div className="flex items-center gap-3">
-                    <span className="badge badge-outline">{doc.platform}</span>
+                    <DocTypeBadge type={doc.type || 'unknown'} />
                     <a
                       href={doc.url}
                       target="_blank"
