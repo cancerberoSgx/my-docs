@@ -193,3 +193,7 @@ add the following features about documents:
 * UI: tjhere's an add-document "+" button that asks for url, description and shows the document type feedback in a modal or a separate document-edit-page
 * in the doc lists when I click a document I'm taken to that document document-edit page where I can see doc info or edit it.
 * the document-page must have a shareable url
+
+# prompt: document page test
+
+implement tests for new endpoints GET /documents/:docId 
