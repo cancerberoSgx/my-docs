@@ -5,6 +5,38 @@ import { signToken } from '../auth';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /auth:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Login
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: password
+ *     responses:
+ *       '200':
+ *         description: JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenResponse'
+ *       '400':
+ *         description: Missing fields
+ *       '401':
+ *         description: Invalid credentials
+ */
 router.post('/auth', async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -24,6 +56,38 @@ router.post('/auth', async (req: Request, res: Response): Promise<void> => {
   res.json({ token });
 });
 
+/**
+ * @openapi
+ * /register:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: newuser@example.com
+ *               password:
+ *                 type: string
+ *                 example: password
+ *     responses:
+ *       '201':
+ *         description: JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenResponse'
+ *       '400':
+ *         description: Missing fields
+ *       '409':
+ *         description: Email already taken
+ */
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   if (!email || !password) {
