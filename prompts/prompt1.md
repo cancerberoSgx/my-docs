@@ -164,3 +164,5 @@ in backend, instead of implementing everything in the routes I want the followin
 listsRoutes -> takes care of validating parameters and user permissions
 listsService -> manage the logic, for example calling listsRepository.get()
 listsRepository -> manage database access. Contains the DB typescript types
+
+
