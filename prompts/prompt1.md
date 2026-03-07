@@ -197,3 +197,32 @@ add the following features about documents:
 # prompt: document page test
 
 implement tests for new endpoints GET /documents/:docId 
+
+
+# prompt:  yt-streamer
+Can you create a .d.ts file defining types of library yt-streamer as used in  backend/src/integrations/youtube/index.ts  so I don't have ts errors ? 
+
+
+
+future:
+
+# prompt document status
+
+documents have status and the status flow depends on its type
+
+for example, web page documents are always "ready" because they are just an url users can open
+
+youtube document types are different. Their status are "empty" at the begnining. Only when user calls PUT /document/:documentId/status they can call action "load" which will calls an  async process that downloads and prespare content into an accessible url. 
+
+User can check the status using polling to GET /document/:documentId/status
+
+valid status: 
+
+empty
+ready
+pending
+error
+
+Tasks:
+implement this for youtube doc type
+add necessary columns for status and update documents endpoints
