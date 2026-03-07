@@ -166,3 +166,24 @@ listsService -> manage the logic, for example calling listsRepository.get()
 listsRepository -> manage database access. Contains the DB typescript types
 
 
+
+
+# api integration tests
+
+I need to have backend API integration tests that for example, create users, lists, documents and check for permissions, services etc. Can you implement this with this first tests ? : 
+ * tests must be all under /test folder
+ * authTest: user can register, unique email registration, user can login (obtain auth header)
+ * listTest: register new user
+  * user can create list, list the list testing sorting and filtering, delete list
+  * user can add documents to a list
+  * delete user on test finish
+
+
+
+ideas / future:
+
+# prompt document page
+
+add the following information in documents:
+
+ * description text
