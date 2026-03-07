@@ -77,7 +77,7 @@ export default function DocumentList({ listId, listName, onBack }: Props) {
           <input
             type="url"
             className="input input-bordered flex-1"
-            placeholder="Paste a video URL…"
+            placeholder="Paste an URL…"
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
             disabled={adding}
