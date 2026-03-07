@@ -144,3 +144,14 @@ When user creates or view a document the document type is shown together with it
 document type is inferred by the backend in an endpoint get /documentType?url=docUrl . if domain is youtube.com it returns "youtube" if not it returns "unknown"
 Implement the "youtube" document type and store/serve the youtubeImage favicon as static asset in the /frontend project
 when creating a new document the frontend first calls this endpoint before user can hit "save" so the type is displayed to the user before it's saved
+
+# prompts
+
+use a library like react-router or recommend one so each screen has its own url. So I can share with others urls of:
+ * my lists
+ * a particular list of documents
+
+
+# prompt
+
+pick the right library so we can generate API reference documentation. there's a npm run apidocs script that generates HTML version of api docs. Serve this HTML in /apidocs endpoint

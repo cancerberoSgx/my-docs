@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { getList, addDocument, getDocumentType, Doc } from '../api';
 import { useAuthStore } from '../store';
-
-interface Props {
-  listId: number;
-  listName: string;
-  onBack: () => void;
-}
 
 function DocTypeIcon({ type }: { type: string }) {
   if (type === 'youtube') {
@@ -29,9 +24,13 @@ function DocTypeBadge({ type }: { type: string }) {
   );
 }
 
-export default function DocumentList({ listId, listName, onBack }: Props) {
+export default function DocumentList() {
+  const { listId: listIdParam } = useParams<{ listId: string }>();
+  const listId = Number(listIdParam);
+  const navigate = useNavigate();
   const token = useAuthStore((s) => s.token)!;
   const clearToken = useAuthStore((s) => s.clearToken);
+  const [listName, setListName] = useState('');
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,7 +77,10 @@ export default function DocumentList({ listId, listName, onBack }: Props) {
   useEffect(() => {
     setLoading(true);
     getList(token, listId)
-      .then((data) => setDocs(data.documents))
+      .then((data) => {
+        setListName(data.name);
+        setDocs(data.documents);
+      })
       .catch((err) => {
         if (err.message === 'Unauthorized' || err.message === 'Invalid or expired token') {
           clearToken();
@@ -94,7 +96,7 @@ export default function DocumentList({ listId, listName, onBack }: Props) {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <button className="btn btn-ghost btn-sm" onClick={onBack}>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/lists')}>
               ← Back
             </button>
             <h1 className="text-2xl font-bold">{listName}</h1>

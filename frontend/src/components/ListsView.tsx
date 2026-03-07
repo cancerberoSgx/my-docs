@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getLists, createList, updateList, deleteList, DocList } from '../api';
 import { useAuthStore } from '../store';
 
 type SortField = 'name' | 'createdAt' | 'updatedAt';
 type SortOrder = 'asc' | 'desc';
 
-interface Props {
-  onSelectList: (list: DocList) => void;
-}
-
-export default function ListsView({ onSelectList }: Props) {
+export default function ListsView() {
   const token = useAuthStore((s) => s.token)!;
+  const navigate = useNavigate();
   const clearToken = useAuthStore((s) => s.clearToken);
   const [lists, setLists] = useState<DocList[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,7 +254,7 @@ export default function ListsView({ onSelectList }: Props) {
                   <div className="flex items-start justify-between gap-3">
                     <button
                       className="text-left flex-1"
-                      onClick={() => onSelectList(list)}
+                      onClick={() => navigate(`/lists/${list.id}`)}
                     >
                       <p className="font-semibold link link-hover">{list.name}</p>
                       {list.description && (
