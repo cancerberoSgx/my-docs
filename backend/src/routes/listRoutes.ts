@@ -482,4 +482,27 @@ router.put('/documents/:docId', requireAuth, async (req: Request, res: Response)
   }
 });
 
+router.get('/documents/:docId/status', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const user = (req as AuthRequest).user;
+  try {
+    res.json(await listsService.getDocumentStatus(Number(req.params.docId), user.userId));
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.put('/documents/:docId/status', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const user = (req as AuthRequest).user;
+  const { action } = req.body;
+  if (!action || typeof action !== 'string') {
+    res.status(400).json({ error: 'action is required' });
+    return;
+  }
+  try {
+    res.json(await listsService.triggerDocumentAction(Number(req.params.docId), user.userId, action));
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 export default router;

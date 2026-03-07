@@ -225,4 +225,11 @@ error
 
 Tasks:
 implement this for youtube doc type
-add necessary columns for status and update documents endpoints
+add necessary db columns for status (text) and statusChangeError(text or NULL)
+update documents endpoints to return status and statusChangeError
+Show the status in the document-page
+in the list page, documents can be filtered by status 
+in the document page, there's a "prepare" button which triggers PUT /document/:documentId/status {action:"load"}
+by default all youtube documents status are in "empty"
+in backend, implement a dummy status manager for youtube type which triggers an async function that first sets the status to "pending" and after 10 seconds changes to "ready"
+if the status change handler fails, we store exception msg in a new  statusChangeError text column. If it does not fail, we empty that column

@@ -40,6 +40,8 @@ export interface Doc {
   type: string;
   description: string | null;
   type_image: string | null;
+  status: string;
+  status_change_error: string | null;
 }
 
 function authHeaders(token: string) {
@@ -118,5 +120,19 @@ export function updateDocument(
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify(data),
+  });
+}
+
+export function getDocumentStatus(token: string, docId: number) {
+  return request<{ status: string; status_change_error: string | null }>(`/documents/${docId}/status`, {
+    headers: authHeaders(token),
+  });
+}
+
+export function triggerDocumentAction(token: string, docId: number, action: string) {
+  return request<{ status: string }>(`/documents/${docId}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ action }),
   });
 }

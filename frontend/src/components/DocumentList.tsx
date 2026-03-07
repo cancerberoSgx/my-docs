@@ -3,6 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getList, addDocument, getDocumentType, Doc } from '../api';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
+import { StatusBadge } from './StatusBadge';
+
+const STATUS_FILTERS = ['all', 'empty', 'pending', 'ready', 'error'] as const;
+type StatusFilter = typeof STATUS_FILTERS[number];
 
 function AddDocumentModal({
   listId,
@@ -120,6 +124,7 @@ export default function DocumentList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   useEffect(() => {
     setLoading(true);
@@ -166,6 +171,20 @@ export default function DocumentList() {
 
         {error && <div className="alert alert-error"><span>{error}</span></div>}
 
+        {!loading && !error && (
+          <div className="flex gap-2 flex-wrap mb-4">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f}
+                className={`btn btn-xs ${statusFilter === f ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setStatusFilter(f)}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        )}
+
         {!loading && !error && docs.length === 0 && (
           <div className="card bg-base-100 shadow">
             <div className="card-body items-center text-center text-base-content/60">
@@ -174,29 +193,39 @@ export default function DocumentList() {
           </div>
         )}
 
-        {!loading && docs.length > 0 && (
-          <div className="flex flex-col gap-3">
-            {docs.map((doc) => (
-              <button
-                key={doc.id}
-                className="card bg-base-100 shadow text-left w-full hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/lists/${listId}/documents/${doc.id}`)}
-              >
-                <div className="card-body py-4">
-                  <div className="flex items-start gap-3">
-                    <DocTypeBadge type={doc.type || 'webpage'} type_image={doc.type_image} />
-                    <div className="min-w-0">
-                      <p className="text-sm truncate text-primary">{doc.url}</p>
-                      {doc.description && (
-                        <p className="text-xs text-base-content/60 mt-0.5 line-clamp-2">{doc.description}</p>
-                      )}
+        {!loading && docs.length > 0 && (() => {
+          const filtered = statusFilter === 'all' ? docs : docs.filter((d) => d.status === statusFilter);
+          return filtered.length === 0 ? (
+            <div className="card bg-base-100 shadow">
+              <div className="card-body items-center text-center text-base-content/60">
+                <p>No documents with status <strong>{statusFilter}</strong>.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filtered.map((doc) => (
+                <button
+                  key={doc.id}
+                  className="card bg-base-100 shadow text-left w-full hover:shadow-md transition-shadow"
+                  onClick={() => navigate(`/lists/${listId}/documents/${doc.id}`)}
+                >
+                  <div className="card-body py-4">
+                    <div className="flex items-start gap-3">
+                      <DocTypeBadge type={doc.type || 'webpage'} type_image={doc.type_image} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm truncate text-primary">{doc.url}</p>
+                        {doc.description && (
+                          <p className="text-xs text-base-content/60 mt-0.5 line-clamp-2">{doc.description}</p>
+                        )}
+                      </div>
+                      <StatusBadge status={doc.status} />
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {showModal && (

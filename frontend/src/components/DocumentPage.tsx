@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getDocument, updateDocument, getDocumentType, Doc } from '../api';
+import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, Doc } from '../api';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
+import { StatusBadge } from './StatusBadge';
 
 export default function DocumentPage() {
   const { listId, docId } = useParams<{ listId: string; docId: string }>();
@@ -21,6 +22,11 @@ export default function DocumentPage() {
   const [typeImage, setTypeImage] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
 
+  const [status, setStatus] = useState('');
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [savedOk, setSavedOk] = useState(false);
@@ -34,6 +40,8 @@ export default function DocumentPage() {
         setDescription(d.description ?? '');
         setType(d.type);
         setTypeImage(d.type_image);
+        setStatus(d.status);
+        setStatusError(d.status_change_error);
       })
       .catch((err) => {
         if (err.message === 'Unauthorized' || err.message === 'Invalid or expired token') {
@@ -58,6 +66,31 @@ export default function DocumentPage() {
     }, 400);
     return () => clearTimeout(timer);
   }, [url, doc?.url]);
+
+  // Poll every 3s while pending
+  useEffect(() => {
+    if (status !== 'pending') {
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+      return;
+    }
+    pollRef.current = setInterval(() => {
+      getDocumentStatus(token, Number(docId))
+        .then(({ status: s, status_change_error: e }) => {
+          setStatus(s);
+          setStatusError(e);
+        })
+        .catch(() => {});
+    }, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [status, token, docId]);
+
+  function handlePrepare() {
+    setPreparing(true);
+    triggerDocumentAction(token, Number(docId), 'load')
+      .then(({ status: s }) => setStatus(s))
+      .catch((err) => setStatusError(err.message))
+      .finally(() => setPreparing(false));
+  }
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -116,11 +149,28 @@ export default function DocumentPage() {
 
         <div className="card bg-base-100 shadow">
           <div className="card-body gap-5">
-            {/* Type badge */}
-            <div className="flex items-center gap-2">
-              <DocTypeBadge type={type} type_image={typeImage} />
-              {detecting && <span className="loading loading-spinner loading-xs" />}
+            {/* Type badge + status */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <DocTypeBadge type={type} type_image={typeImage} />
+                {detecting && <span className="loading loading-spinner loading-xs" />}
+              </div>
+              <div className="flex items-center gap-2">
+                {status && <StatusBadge status={status} />}
+                {doc?.type === 'youtube' && status === 'empty' && (
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={handlePrepare}
+                    disabled={preparing}
+                  >
+                    {preparing ? <span className="loading loading-spinner loading-xs" /> : 'Prepare'}
+                  </button>
+                )}
+              </div>
             </div>
+            {status === 'error' && statusError && (
+              <p className="text-error text-xs">{statusError}</p>
+            )}
 
             <form onSubmit={handleSave} className="flex flex-col gap-4">
               <label className="form-control w-full">

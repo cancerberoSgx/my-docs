@@ -1,5 +1,6 @@
 import { AppError } from '../errors';
 import * as listsRepo from '../repositories/listsRepository';
+import * as youtubeStatusManager from './youtubeStatusManager';
 import type { List, Doc } from '../repositories/listsRepository';
 
 const VALID_ORDER_COLS = ['name', 'created_at', 'updated_at'];
@@ -46,7 +47,8 @@ export async function addDocumentToList(
 ): Promise<Doc> {
   const list = await listsRepo.getListById(listId, userId);
   if (!list) throw new AppError(404, 'List not found');
-  const doc = await listsRepo.createDocument(userId, url, platform, type, description, type_image);
+  const status = type === 'webpage' ? 'ready' : 'empty';
+  const doc = await listsRepo.createDocument(userId, url, platform, type, description, type_image, status);
   await listsRepo.addDocumentToList(listId, doc.id);
   return doc;
 }
@@ -65,6 +67,29 @@ export async function updateDocument(
   const doc = await listsRepo.getDocumentById(docId, userId);
   if (!doc) throw new AppError(404, 'Document not found');
   return listsRepo.updateDocument(docId, data);
+}
+
+export async function getDocumentStatus(
+  docId: number,
+  userId: number,
+): Promise<{ status: string; status_change_error: string | null }> {
+  const row = await listsRepo.getDocumentStatus(docId, userId);
+  if (!row) throw new AppError(404, 'Document not found');
+  return row;
+}
+
+export async function triggerDocumentAction(
+  docId: number,
+  userId: number,
+  action: string,
+): Promise<{ status: string }> {
+  if (action !== 'load') throw new AppError(400, 'Unknown action');
+  const doc = await listsRepo.getDocumentById(docId, userId);
+  if (!doc) throw new AppError(404, 'Document not found');
+  if (doc.type !== 'youtube') throw new AppError(400, 'Action only supported for youtube documents');
+  if (doc.status !== 'empty') throw new AppError(409, 'Document is not in empty status');
+  await youtubeStatusManager.triggerLoad(docId);
+  return { status: 'pending' };
 }
 
 export function detectDocumentType(url: string): { type: string; type_image: string } {

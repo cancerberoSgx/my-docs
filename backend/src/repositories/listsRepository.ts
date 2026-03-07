@@ -17,6 +17,8 @@ export interface Doc {
   type: string;
   description: string | null;
   type_image: string | null;
+  status: string;
+  status_change_error: string | null;
 }
 
 async function getById(id: number): Promise<List | null> {
@@ -77,13 +79,29 @@ export async function createDocument(
   type: string,
   description: string | null,
   type_image: string | null,
+  status: string,
 ): Promise<Doc> {
   const { rows: [{ id }] } = await db.query<{ id: number }>(
-    'INSERT INTO documents (user_id, url, platform, type, description, type_image) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-    [userId, url, platform, type, description, type_image]
+    'INSERT INTO documents (user_id, url, platform, type, description, type_image, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+    [userId, url, platform, type, description, type_image, status]
   );
   const { rows } = await db.query<Doc>('SELECT * FROM documents WHERE id = $1', [id]);
   return rows[0];
+}
+
+export async function setDocumentStatus(id: number, status: string, error: string | null): Promise<void> {
+  await db.query(
+    'UPDATE documents SET status = $1, status_change_error = $2 WHERE id = $3',
+    [status, error, id]
+  );
+}
+
+export async function getDocumentStatus(id: number, userId: number): Promise<Pick<Doc, 'status' | 'status_change_error'> | null> {
+  const { rows } = await db.query<Pick<Doc, 'status' | 'status_change_error'>>(
+    'SELECT status, status_change_error FROM documents WHERE id = $1 AND user_id = $2',
+    [id, userId]
+  );
+  return rows[0] ?? null;
 }
 
 export function addDocumentToList(listId: number, documentId: number): Promise<void> {
