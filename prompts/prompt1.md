@@ -102,6 +102,8 @@ Add gitignore file in both projects
 
 # prompt 3
 
+implement: users are able add new documents. 
+
 Add the following information to DB tables, endpoints API and also reflect this information on the frontend
 
  * db users table new columns: 

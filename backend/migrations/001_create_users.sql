@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 INSERT OR IGNORE INTO users (email, password, role)
-VALUES ('admin@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+VALUES ('sebastigurin@gmail.com', '$2a$10$cqJv0C8jtYLV2G9bejVdaeQppbohH/Jov7uUBmyiOwVOoXfT8AIK2', 'admin');
 -- default password is "password"
