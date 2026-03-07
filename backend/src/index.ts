@@ -13,8 +13,11 @@ app.use(express.json());
 app.use('/api', authRoutes);
 app.use('/api', listRoutes);
 
-runMigrations();
-
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+runMigrations().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Backend running on http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Failed to run migrations:', err);
+  process.exit(1);
 });

@@ -6,25 +6,26 @@ const router = Router();
 
 type AuthRequest = Request & { user: JwtPayload };
 
-// GET /lists?name=&orderBy=name|createdAt|updatedAt&order=asc|desc
-router.get('/lists', requireAuth, (req: Request, res: Response): void => {
+// GET /lists?orderBy=name|created_at|updated_at&order=asc|desc
+router.get('/lists', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { orderBy, order } = req.query;
 
-  const col = ['name', 'createdAt', 'updatedAt'].includes(String(orderBy))
+  const col = ['name', 'created_at', 'updated_at'].includes(String(orderBy))
     ? String(orderBy)
-    : 'createdAt';
+    : 'created_at';
   const dir = order === 'desc' ? 'DESC' : 'ASC';
 
-  const lists = db
-    .prepare(`SELECT * FROM lists WHERE userId = ? ORDER BY ${col} ${dir}`)
-    .all(user.userId);
+  const { rows } = await db.query(
+    `SELECT * FROM lists WHERE user_id = $1 ORDER BY ${col} ${dir}`,
+    [user.userId]
+  );
 
-  res.json(lists);
+  res.json(rows);
 });
 
 // POST /lists
-router.post('/lists', requireAuth, (req: Request, res: Response): void => {
+router.post('/lists', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { name, description } = req.body;
 
@@ -33,48 +34,52 @@ router.post('/lists', requireAuth, (req: Request, res: Response): void => {
     return;
   }
 
-  const result = db
-    .prepare('INSERT INTO lists (name, description, userId) VALUES (?, ?, ?)')
-    .run(name.trim(), description?.trim() || null, user.userId);
+  const { rows } = await db.query(
+    'INSERT INTO lists (name, description, user_id) VALUES ($1, $2, $3) RETURNING id',
+    [name.trim(), description?.trim() || null, user.userId]
+  );
 
-  const list = db.prepare('SELECT * FROM lists WHERE id = ?').get(result.lastInsertRowid);
-  res.status(201).json(list);
+  const { rows: listRows } = await db.query('SELECT * FROM lists WHERE id = $1', [rows[0].id]);
+  res.status(201).json(listRows[0]);
 });
 
 // GET /lists/:listId — returns list with its documents
-router.get('/lists/:listId', requireAuth, (req: Request, res: Response): void => {
+router.get('/lists/:listId', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const listId = Number(req.params.listId);
 
-  const list = db
-    .prepare('SELECT * FROM lists WHERE id = ? AND userId = ?')
-    .get(listId, user.userId);
+  const { rows: listRows } = await db.query(
+    'SELECT * FROM lists WHERE id = $1 AND user_id = $2',
+    [listId, user.userId]
+  );
+  const list = listRows[0];
 
   if (!list) {
     res.status(404).json({ error: 'List not found' });
     return;
   }
 
-  const documents = db
-    .prepare(
-      `SELECT d.* FROM documents d
-       JOIN lists_documents ld ON ld.documentId = d.id
-       WHERE ld.listId = ?`
-    )
-    .all(listId);
+  const { rows: documents } = await db.query(
+    `SELECT d.* FROM documents d
+     JOIN lists_documents ld ON ld.document_id = d.id
+     WHERE ld.list_id = $1`,
+    [listId]
+  );
 
   res.json({ ...list, documents });
 });
 
 // PUT /lists/:listId
-router.put('/lists/:listId', requireAuth, (req: Request, res: Response): void => {
+router.put('/lists/:listId', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const listId = Number(req.params.listId);
   const { name, description } = req.body;
 
-  const list = db
-    .prepare('SELECT * FROM lists WHERE id = ? AND userId = ?')
-    .get(listId, user.userId) as { name: string; description: string | null } | undefined;
+  const { rows: listRows } = await db.query(
+    'SELECT * FROM lists WHERE id = $1 AND user_id = $2',
+    [listId, user.userId]
+  );
+  const list = listRows[0] as { name: string; description: string | null } | undefined;
 
   if (!list) {
     res.status(404).json({ error: 'List not found' });
@@ -86,22 +91,25 @@ router.put('/lists/:listId', requireAuth, (req: Request, res: Response): void =>
     return;
   }
 
-  db.prepare(
-    `UPDATE lists SET name = ?, description = ?, updatedAt = datetime('now') WHERE id = ?`
-  ).run(name.trim(), description?.trim() ?? list.description, listId);
+  await db.query(
+    `UPDATE lists SET name = $1, description = $2, updated_at = NOW() WHERE id = $3`,
+    [name.trim(), description?.trim() ?? list.description, listId]
+  );
 
-  const updated = db.prepare('SELECT * FROM lists WHERE id = ?').get(listId);
-  res.json(updated);
+  const { rows: updated } = await db.query('SELECT * FROM lists WHERE id = $1', [listId]);
+  res.json(updated[0]);
 });
 
 // DELETE /lists/:listId
-router.delete('/lists/:listId', requireAuth, (req: Request, res: Response): void => {
+router.delete('/lists/:listId', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const listId = Number(req.params.listId);
 
-  const list = db
-    .prepare('SELECT * FROM lists WHERE id = ? AND userId = ?')
-    .get(listId, user.userId) as { name: string } | undefined;
+  const { rows } = await db.query(
+    'SELECT * FROM lists WHERE id = $1 AND user_id = $2',
+    [listId, user.userId]
+  );
+  const list = rows[0] as { name: string } | undefined;
 
   if (!list) {
     res.status(404).json({ error: 'List not found' });
@@ -113,21 +121,22 @@ router.delete('/lists/:listId', requireAuth, (req: Request, res: Response): void
     return;
   }
 
-  db.prepare('DELETE FROM lists WHERE id = ?').run(listId);
+  await db.query('DELETE FROM lists WHERE id = $1', [listId]);
   res.status(204).send();
 });
 
 // POST /lists/:listId/documents
-router.post('/lists/:listId/documents', requireAuth, (req: Request, res: Response): void => {
+router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const listId = Number(req.params.listId);
   const { url, platform } = req.body;
 
-  const list = db
-    .prepare('SELECT * FROM lists WHERE id = ? AND userId = ?')
-    .get(listId, user.userId);
+  const { rows: listRows } = await db.query(
+    'SELECT * FROM lists WHERE id = $1 AND user_id = $2',
+    [listId, user.userId]
+  );
 
-  if (!list) {
+  if (listRows.length === 0) {
     res.status(404).json({ error: 'List not found' });
     return;
   }
@@ -141,15 +150,19 @@ router.post('/lists/:listId/documents', requireAuth, (req: Request, res: Respons
     return;
   }
 
-  const docResult = db
-    .prepare('INSERT INTO documents (userId, url, platform) VALUES (?, ?, ?)')
-    .run(user.userId, url.trim(), platform.trim());
+  const { rows: docRows } = await db.query(
+    'INSERT INTO documents (user_id, url, platform) VALUES ($1, $2, $3) RETURNING id',
+    [user.userId, url.trim(), platform.trim()]
+  );
+  const docId = docRows[0].id;
 
-  db.prepare('INSERT INTO lists_documents (listId, documentId) VALUES (?, ?)')
-    .run(listId, docResult.lastInsertRowid);
+  await db.query(
+    'INSERT INTO lists_documents (list_id, document_id) VALUES ($1, $2)',
+    [listId, docId]
+  );
 
-  const doc = db.prepare('SELECT * FROM documents WHERE id = ?').get(docResult.lastInsertRowid);
-  res.status(201).json(doc);
+  const { rows: doc } = await db.query('SELECT * FROM documents WHERE id = $1', [docId]);
+  res.status(201).json(doc[0]);
 });
 
 export default router;

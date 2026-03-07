@@ -5,16 +5,15 @@ import { signToken } from '../auth';
 
 const router = Router();
 
-router.post('/auth', (req: Request, res: Response): void => {
+router.post('/auth', async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400).json({ error: 'Email and password required' });
     return;
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as
-    | { id: number; email: string; password: string; role: string }
-    | undefined;
+  const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+  const user = rows[0] as { id: number; email: string; password: string; role: string } | undefined;
 
   if (!user || !bcrypt.compareSync(password, user.password)) {
     res.status(401).json({ error: 'Invalid credentials' });
@@ -25,24 +24,30 @@ router.post('/auth', (req: Request, res: Response): void => {
   res.json({ token });
 });
 
-router.post('/register', (req: Request, res: Response): void => {
+router.post('/register', async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400).json({ error: 'Email and password required' });
     return;
   }
 
-  const existing = db.prepare('SELECT 1 FROM users WHERE email = ?').get(email);
-  if (existing) {
+  const { rows: existing } = await db.query('SELECT 1 FROM users WHERE email = $1', [email]);
+  if (existing.length > 0) {
     res.status(409).json({ error: 'Email already taken' });
     return;
   }
 
   const hashed = bcrypt.hashSync(password, 10);
-  const result = db.prepare('INSERT INTO users (email, password, role) VALUES (?, ?, ?)').run(email, hashed, 'user');
-  const userId = Number(result.lastInsertRowid);
+  const { rows } = await db.query(
+    'INSERT INTO users (email, password, role) VALUES ($1, $2, $3) RETURNING id',
+    [email, hashed, 'user']
+  );
+  const userId = rows[0].id;
 
-  db.prepare('INSERT INTO lists (name, description, userId) VALUES (?, ?, ?)').run('default', 'Default list', userId);
+  await db.query(
+    'INSERT INTO lists (name, description, user_id) VALUES ($1, $2, $3)',
+    ['default', 'Default list', userId]
+  );
 
   const token = signToken({ userId, email, role: 'user' });
   res.status(201).json({ token });

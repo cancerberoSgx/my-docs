@@ -130,3 +130,15 @@ remove everything related to documentRoutes in code, endpoints and frontend
 
 
 # prompt
+
+in /backend
+migrate sqlite to postgres
+use docker for local development so there's sh command that starts a postgres server so I can `npm run dev`ç
+
+
+# prompt
+
+New feature: document type
+there's a new "type" column in "documents" table . A document could be just a web page, an uploaded document, a youtube vide taken from its url, an mcp server, etc. 
+When user creates or view a document the document type is shown together with it icon
+Implement the "youtube" document type and store/serve the youtubeImage favicon as static asset in the /frontend project
