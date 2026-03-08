@@ -1,3 +1,8 @@
+export enum UserRole {
+  User = 'user',
+  Root = 'root',
+}
+
 export enum DocumentStatus {
   Empty = 'empty',
   Pending = 'pending',

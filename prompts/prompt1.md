@@ -286,3 +286,18 @@ menus:
  * Docs ->
    * dummy links to home page, about us, 
    * link to apidocs
+
+
+# prompt: user role
+
+ * there are two user roles: "user" and "root"
+  * current "admin" role must be migrated to "root". Also create a new user user@test.com pssword: 1234 in db with role "user"
+  * in backend we want to check for user role permissions on each operation. It should be an easy to use middleware to check for user+root or root-only permissions on each endpoint
+  * user role is displayed in the account / user screen and can be change only by root user (read only) - by default users are "user" role
+  * save the roles in enum both front and back
+  * user can see and edit only their lists, documents, user-profile. 
+  * root can see any user's profile, list and documents and also edit changes on all.
+  * root can see an extra menu and screens:
+    * menu root -> users: display a list of users (html data-table), with pagination (limit and offset params), orderBy creation date, email, role root and filter by email (implement api endpoint - only root)
+    * menu root -> documents  display a list (html data-table) which contains all documents , with pagination (limit and offset params), orderBy creation date, url, type filter by url and type  (implement api endpoint - only root)
+    * menu root -> lists:   display a list (html data-table) which contains all documents , with pagination (limit and offset params), orderBy creation date, url, type filter by url and type  (implement api endpoint - only root)

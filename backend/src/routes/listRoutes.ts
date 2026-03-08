@@ -1,8 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { requireAuth, JwtPayload } from '../auth';
+import { requireRole, JwtPayload } from '../auth';
 import { AppError } from '../errors';
-import { DocumentType } from '../enums';
+import { DocumentType, UserRole } from '../enums';
 import * as listsService from '../services/listsService';
+
+function scopedUserId(user: JwtPayload): number | null {
+  return user.role === UserRole.Root ? null : user.userId;
+}
 
 const router = Router();
 
@@ -124,10 +128,10 @@ router.get('/documentType', (req: Request, res: Response): void => {
  *       '401':
  *         description: Unauthorized
  */
-router.get('/lists', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get('/lists', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   try {
-    res.json(await listsService.getLists(user.userId, String(req.query.orderBy || ''), String(req.query.order || '')));
+    res.json(await listsService.getLists(scopedUserId(user), String(req.query.orderBy || ''), String(req.query.order || '')));
   } catch (err) {
     handleError(res, err);
   }
@@ -165,7 +169,7 @@ router.get('/lists', requireAuth, async (req: Request, res: Response): Promise<v
  *       '401':
  *         description: Unauthorized
  */
-router.post('/lists', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post('/lists', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { name, description } = req.body;
   if (!name || typeof name !== 'string' || !name.trim()) {
@@ -212,10 +216,10 @@ router.post('/lists', requireAuth, async (req: Request, res: Response): Promise<
  *       '404':
  *         description: List not found
  */
-router.get('/lists/:listId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get('/lists/:listId', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   try {
-    res.json(await listsService.getList(Number(req.params.listId), user.userId));
+    res.json(await listsService.getList(Number(req.params.listId), scopedUserId(user)));
   } catch (err) {
     handleError(res, err);
   }
@@ -261,7 +265,7 @@ router.get('/lists/:listId', requireAuth, async (req: Request, res: Response): P
  *       '404':
  *         description: List not found
  */
-router.put('/lists/:listId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.put('/lists/:listId', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { name, description } = req.body;
   if (!name || typeof name !== 'string' || !name.trim()) {
@@ -269,7 +273,7 @@ router.put('/lists/:listId', requireAuth, async (req: Request, res: Response): P
     return;
   }
   try {
-    res.json(await listsService.updateList(Number(req.params.listId), user.userId, name.trim(), description));
+    res.json(await listsService.updateList(Number(req.params.listId), scopedUserId(user), name.trim(), description));
   } catch (err) {
     handleError(res, err);
   }
@@ -299,10 +303,10 @@ router.put('/lists/:listId', requireAuth, async (req: Request, res: Response): P
  *       '404':
  *         description: List not found
  */
-router.delete('/lists/:listId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.delete('/lists/:listId', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   try {
-    await listsService.deleteList(Number(req.params.listId), user.userId);
+    await listsService.deleteList(Number(req.params.listId), scopedUserId(user));
     res.status(204).send();
   } catch (err) {
     handleError(res, err);
@@ -354,7 +358,7 @@ router.delete('/lists/:listId', requireAuth, async (req: Request, res: Response)
  *       '404':
  *         description: List not found
  */
-router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post('/lists/:listId/documents', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { url, platform, type, description, type_image } = req.body;
   if (!url || typeof url !== 'string' || !url.trim()) {
@@ -369,6 +373,7 @@ router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: R
     res.status(201).json(
       await listsService.addDocumentToList(
         Number(req.params.listId),
+        scopedUserId(user),
         user.userId,
         url.trim(),
         platform.trim(),

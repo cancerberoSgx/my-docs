@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireAuth, JwtPayload } from '../auth';
+import { requireRole, JwtPayload } from '../auth';
 import { AppError } from '../errors';
 import { getMe, changePassword, deleteAccount } from '../services/authService';
 
@@ -15,7 +15,7 @@ function handleError(res: Response, err: unknown): void {
   }
 }
 
-router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get('/me', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   try {
     res.json(await getMe(user.userId));
@@ -24,7 +24,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
   }
 });
 
-router.put('/me/password', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.put('/me/password', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
@@ -43,7 +43,7 @@ router.put('/me/password', requireAuth, async (req: Request, res: Response): Pro
   }
 });
 
-router.delete('/me', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.delete('/me', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { password } = req.body;
   if (!password) {

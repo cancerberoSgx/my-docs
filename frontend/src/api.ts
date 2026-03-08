@@ -143,6 +143,54 @@ export function getDocumentStatus(token: string, docId: number) {
   });
 }
 
+// ── Admin ────────────────────────────────────────────────────────────────────
+
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+export function adminGetUsers(token: string, params: Record<string, string | number>) {
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  return request<Paginated<AdminUser>>(`/admin/users?${qs}`, { headers: authHeaders(token) });
+}
+
+export function adminSetUserRole(token: string, userId: number, role: string) {
+  return request<{ message: string }>(`/admin/users/${userId}/role`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ role }),
+  });
+}
+
+export function adminGetDocuments(token: string, params: Record<string, string | number>) {
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  return request<Paginated<Doc>>(`/admin/documents?${qs}`, { headers: authHeaders(token) });
+}
+
+export interface AdminList {
+  id: number;
+  user_id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function adminGetLists(token: string, params: Record<string, string | number>) {
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  return request<Paginated<AdminList>>(`/admin/lists?${qs}`, { headers: authHeaders(token) });
+}
+
+// ── Account ───────────────────────────────────────────────────────────────────
+
 export function getMe(token: string) {
   return request<Me>('/me', { headers: authHeaders(token) });
 }

@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import listRoutes from './routes/listRoutes';
 import documentsRoutes from './routes/documentsRoutes';
 import accountRoutes from './routes/accountRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 export const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 
 app.use('/api', authRoutes);
 app.use('/api', accountRoutes);
+app.use('/api', adminRoutes);
 app.use('/api', listRoutes);
 app.use('/api', documentsRoutes);
 

@@ -1,8 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { requireAuth, JwtPayload } from '../auth';
+import { requireRole, JwtPayload } from '../auth';
 import { AppError } from '../errors';
-import { DocumentType } from '../enums';
+import { DocumentType, UserRole } from '../enums';
 import * as listsService from '../services/listsService';
+
+function scopedUserId(user: JwtPayload): number | null {
+  return user.role === UserRole.Root ? null : scopedUserId(user);
+}
 
 const router = Router();
 
@@ -16,16 +20,16 @@ function handleError(res: Response, err: unknown): void {
   }
 }
 
-router.get('/documents/:docId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get('/documents/:docId', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   try {
-    res.json(await listsService.getDocument(Number(req.params.docId), user.userId));
+    res.json(await listsService.getDocument(Number(req.params.docId), scopedUserId(user)));
   } catch (err) {
     handleError(res, err);
   }
 });
 
-router.put('/documents/:docId', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.put('/documents/:docId', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { url, description, type, type_image } = req.body;
   if (!url || typeof url !== 'string' || !url.trim()) {
@@ -34,7 +38,7 @@ router.put('/documents/:docId', requireAuth, async (req: Request, res: Response)
   }
   try {
     res.json(
-      await listsService.updateDocument(Number(req.params.docId), user.userId, {
+      await listsService.updateDocument(Number(req.params.docId), scopedUserId(user), {
         url: url.trim(),
         description: description?.trim() || null,
         type: type || DocumentType.Webpage,
@@ -46,16 +50,16 @@ router.put('/documents/:docId', requireAuth, async (req: Request, res: Response)
   }
 });
 
-router.get('/documents/:docId/status', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get('/documents/:docId/status', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   try {
-    res.json(await listsService.getDocumentStatus(Number(req.params.docId), user.userId));
+    res.json(await listsService.getDocumentStatus(Number(req.params.docId), scopedUserId(user)));
   } catch (err) {
     handleError(res, err);
   }
 });
 
-router.put('/documents/:docId/status', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.put('/documents/:docId/status', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { action } = req.body;
   if (!action || typeof action !== 'string') {
@@ -63,7 +67,7 @@ router.put('/documents/:docId/status', requireAuth, async (req: Request, res: Re
     return;
   }
   try {
-    res.json(await listsService.triggerDocumentAction(Number(req.params.docId), user.userId, action));
+    res.json(await listsService.triggerDocumentAction(Number(req.params.docId), scopedUserId(user), action));
   } catch (err) {
     handleError(res, err);
   }

@@ -26,17 +26,17 @@ async function getById(id: number): Promise<List | null> {
   return rows[0] ?? null;
 }
 
-export async function getLists(userId: number, col: string, dir: string): Promise<List[]> {
+export async function getLists(userId: number | null, col: string, dir: string): Promise<List[]> {
   const { rows } = await db.query<List>(
-    `SELECT * FROM lists WHERE user_id = $1 ORDER BY ${col} ${dir}`,
+    `SELECT * FROM lists WHERE ($1::int IS NULL OR user_id = $1) ORDER BY ${col} ${dir}`,
     [userId]
   );
   return rows;
 }
 
-export async function getListById(id: number, userId: number): Promise<List | null> {
+export async function getListById(id: number, userId: number | null): Promise<List | null> {
   const { rows } = await db.query<List>(
-    'SELECT * FROM lists WHERE id = $1 AND user_id = $2',
+    'SELECT * FROM lists WHERE id = $1 AND ($2::int IS NULL OR user_id = $2)',
     [id, userId]
   );
   return rows[0] ?? null;
@@ -116,7 +116,7 @@ export async function recordStatusChange(
   );
 }
 
-export async function getDocumentStatus(id: number, userId: number): Promise<DocumentStatusResult | null> {
+export async function getDocumentStatus(id: number, userId: number | null): Promise<DocumentStatusResult | null> {
   const { rows } = await db.query<DocumentStatusResult>(
     `SELECT d.status, d.status_change_error,
             h.resolved_url, h.resolved_mimetype, h.resolved_extra
@@ -128,7 +128,7 @@ export async function getDocumentStatus(id: number, userId: number): Promise<Doc
        ORDER BY created_at DESC
        LIMIT 1
      ) h ON true
-     WHERE d.id = $1 AND d.user_id = $2`,
+     WHERE d.id = $1 AND ($2::int IS NULL OR d.user_id = $2)`,
     [id, userId]
   );
   return rows[0] ?? null;
@@ -141,9 +141,9 @@ export function addDocumentToList(listId: number, documentId: number): Promise<v
   ).then(() => {});
 }
 
-export async function getDocumentById(id: number, userId: number): Promise<Doc | null> {
+export async function getDocumentById(id: number, userId: number | null): Promise<Doc | null> {
   const { rows } = await db.query<Doc>(
-    'SELECT * FROM documents WHERE id = $1 AND user_id = $2',
+    'SELECT * FROM documents WHERE id = $1 AND ($2::int IS NULL OR user_id = $2)',
     [id, userId]
   );
   return rows[0] ?? null;

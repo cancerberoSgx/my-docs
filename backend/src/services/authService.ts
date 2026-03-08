@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { AppError } from '../errors';
+import { UserRole } from '../enums';
 import { signToken } from '../auth';
 import * as usersRepo from '../repositories/usersRepository';
 import * as listsRepo from '../repositories/listsRepository';
@@ -9,7 +10,7 @@ export async function login(email: string, password: string): Promise<string> {
   if (!user || !bcrypt.compareSync(password, user.password)) {
     throw new AppError(401, 'Invalid credentials');
   }
-  return signToken({ userId: user.id, email: user.email, role: user.role });
+  return signToken({ userId: user.id, email: user.email, role: user.role as UserRole });
 }
 
 export async function getMe(userId: number): Promise<{ id: number; email: string; role: string }> {
@@ -39,5 +40,5 @@ export async function register(email: string, password: string): Promise<string>
   const hashed = bcrypt.hashSync(password, 10);
   const user = await usersRepo.createUser(email, hashed);
   await listsRepo.createList('default', 'Default list', user.id);
-  return signToken({ userId: user.id, email, role: 'user' });
+  return signToken({ userId: user.id, email, role: UserRole.User });
 }

@@ -2,9 +2,10 @@ import { ReactNode, useEffect, useId, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, X, LogOut, LogIn, UserPlus, User, Settings,
-  BookOpen, Home, Info, Code,
+  BookOpen, Home, Info, Code, ShieldCheck, Users, FileText, List,
 } from 'lucide-react';
 import { useAuthStore } from '../store';
+import { UserRole } from '../enums';
 
 function NavItem({
   icon,
@@ -61,7 +62,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.token);
+  const role = useAuthStore((s) => s.role);
   const clearToken = useAuthStore((s) => s.clearToken);
+  const isRoot = role === UserRole.Root;
 
   // Close drawer on navigation
   useEffect(() => { setOpen(false); }, [location.pathname]);
@@ -107,6 +110,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           {/* Sidebar header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-base-200">
             <span className="font-bold text-base">my-docs</span>
+            {isRoot && (
+              <span className="badge badge-warning badge-sm gap-1">
+                <ShieldCheck size={10} /> root
+              </span>
+            )}
             <label htmlFor={id} className="btn btn-ghost btn-circle btn-sm" aria-label="Close menu">
               <X size={16} />
             </label>
@@ -131,6 +139,16 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <SectionLabel>Settings</SectionLabel>
                 <NavItem icon={<User size={18} />} label="Account" to="/account" />
                 <NavItem icon={<Settings size={18} />} label="Settings" to="/settings" />
+              </>
+            )}
+
+            {/* Root admin section */}
+            {isRoot && (
+              <>
+                <SectionLabel>Root</SectionLabel>
+                <NavItem icon={<Users size={18} />} label="Users" to="/admin/users" />
+                <NavItem icon={<FileText size={18} />} label="Documents" to="/admin/documents" />
+                <NavItem icon={<List size={18} />} label="Lists" to="/admin/lists" />
               </>
             )}
 
