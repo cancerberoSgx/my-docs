@@ -167,7 +167,7 @@ export default function DocumentPage() {
               </div>
               <div className="flex items-center gap-2">
                 {status && <StatusBadge status={status} />}
-                {doc?.type === 'youtube' && status === 'empty' && (
+                {doc?.type === 'youtube' && (status === 'empty' || status === 'ready') && (
                   <button
                     className="btn btn-sm btn-outline"
                     onClick={handlePrepare}

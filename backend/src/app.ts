@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import authRoutes from './routes/authRoutes';
 import listRoutes from './routes/listRoutes';
+import documentsRoutes from './routes/documentsRoutes';
 
 export const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 app.use('/api', authRoutes);
 app.use('/api', listRoutes);
+app.use('/api', documentsRoutes);
 
 const apidocsPath = path.join(__dirname, '..', 'public', 'apidocs.html');
 app.get('/apidocs', (req, res) => {

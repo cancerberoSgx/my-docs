@@ -253,3 +253,12 @@ createdAt: timestamp
 resolved_url: string
 resolved_mimetype: string
 resolved_extra: jsonb
+
+
+# prompt: documents routes
+
+ from listRoutes backend, move all methods hitting /documents* to a new route documentsRoutes
+
+# prompt: re-prepare youtube documents
+
+in the UI even if it's "ready" user can post a "load" action again

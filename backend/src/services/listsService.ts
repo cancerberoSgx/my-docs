@@ -87,7 +87,7 @@ export async function triggerDocumentAction(
   const doc = await listsRepo.getDocumentById(docId, userId);
   if (!doc) throw new AppError(404, 'Document not found');
   if (doc.type !== 'youtube') throw new AppError(400, 'Action only supported for youtube documents');
-  if (doc.status !== 'empty') throw new AppError(409, 'Document is not in empty status');
+  if (doc.status !== 'empty' && doc.status !== 'ready') throw new AppError(409, 'Document must be in empty or ready status');
   await youtubeStatusManager.triggerLoad(docId);
   return { status: 'pending' };
 }
