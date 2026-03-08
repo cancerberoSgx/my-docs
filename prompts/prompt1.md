@@ -301,3 +301,21 @@ menus:
     * menu root -> users: display a list of users (html data-table), with pagination (limit and offset params), orderBy creation date, email, role root and filter by email (implement api endpoint - only root)
     * menu root -> documents  display a list (html data-table) which contains all documents , with pagination (limit and offset params), orderBy creation date, url, type filter by url and type  (implement api endpoint - only root)
     * menu root -> lists:   display a list (html data-table) which contains all documents , with pagination (limit and offset params), orderBy creation date, url, type filter by url and type  (implement api endpoint - only root)
+
+
+---
+
+following executed byt not needed:
+issue: a root users are not seeing menues: 
+
+  * root can see an extra menu and screens:
+    * menu root -> users: display a list of users (html data-table), with pagination (limit and offset params), orderBy creation date, email, role root and filter by email (implement api endpoint - only root)
+    * menu root -> documents  display a list (html data-table) which contains all documents , with pagination (limit and offset params), orderBy creation date, url, type filter by url and type  (implement api endpoint - only root)
+    * menu root -> lists:   display a list (html data-table) which contains all documents , with pagination (limit and offset params), orderBy creation date, url, type filter by url and type  (implement api endpoint - only root)
+
+
+# prompt: user details
+
+a root user , user list, can click a user and show user details and modify them
+re-use the account screen if possible
+backend: only the root user can change other users. An admin uuser can only edit himself

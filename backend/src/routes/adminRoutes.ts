@@ -1,8 +1,10 @@
+import bcrypt from 'bcryptjs';
 import { Router, Request, Response } from 'express';
 import { requireRole } from '../auth';
 import { AppError } from '../errors';
 import { UserRole } from '../enums';
 import * as adminRepo from '../repositories/adminRepository';
+import * as usersRepo from '../repositories/usersRepository';
 
 const router = Router();
 
@@ -26,6 +28,38 @@ router.get('/admin/users', requireRole(UserRole.Root), async (req: Request, res:
   try {
     const email = req.query.email ? String(req.query.email) : undefined;
     res.json(await adminRepo.adminGetUsers({ ...pageParams(req.query as Record<string, unknown>), email }));
+  } catch (err) { handleError(res, err); }
+});
+
+router.get('/admin/users/:userId', requireRole(UserRole.Root), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await usersRepo.getUserById(Number(req.params.userId));
+    if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+    const { password: _, ...safe } = user;
+    res.json(safe);
+  } catch (err) { handleError(res, err); }
+});
+
+router.put('/admin/users/:userId/password', requireRole(UserRole.Root), async (req: Request, res: Response): Promise<void> => {
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 8) {
+    res.status(400).json({ error: 'newPassword must be at least 8 characters' });
+    return;
+  }
+  try {
+    const user = await usersRepo.getUserById(Number(req.params.userId));
+    if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+    await usersRepo.updatePassword(Number(req.params.userId), bcrypt.hashSync(newPassword, 10));
+    res.json({ message: 'Password updated' });
+  } catch (err) { handleError(res, err); }
+});
+
+router.delete('/admin/users/:userId', requireRole(UserRole.Root), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await usersRepo.getUserById(Number(req.params.userId));
+    if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+    await usersRepo.deleteUser(Number(req.params.userId));
+    res.status(204).send();
   } catch (err) { handleError(res, err); }
 });
 

@@ -157,6 +157,27 @@ export interface AdminUser {
   created_at: string;
 }
 
+export function adminGetUser(token: string, userId: number) {
+  return request<Me>(`/admin/users/${userId}`, { headers: authHeaders(token) });
+}
+
+export function adminSetPassword(token: string, userId: number, newPassword: string) {
+  return request<{ message: string }>(`/admin/users/${userId}/password`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ newPassword }),
+  });
+}
+
+export function adminDeleteUser(token: string, userId: number) {
+  return fetch(`${BASE}/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  }).then((res) => {
+    if (!res.ok) return res.json().then((d: { error?: string }) => { throw new Error(d.error || 'Request failed'); });
+  });
+}
+
 export function adminGetUsers(token: string, params: Record<string, string | number>) {
   const qs = new URLSearchParams(params as Record<string, string>).toString();
   return request<Paginated<AdminUser>>(`/admin/users?${qs}`, { headers: authHeaders(token) });

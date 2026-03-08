@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminGetUsers, adminSetUserRole, AdminUser, Paginated } from '../api';
 import { useAuthStore } from '../store';
 import { UserRole } from '../enums';
@@ -8,6 +9,7 @@ const LIMIT = 20;
 
 export default function AdminUsersPage() {
   const token = useAuthStore((s) => s.token)!;
+  const navigate = useNavigate();
   const [data, setData] = useState<Paginated<AdminUser> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -111,7 +113,11 @@ export default function AdminUsersPage() {
                   {data.items.length === 0 ? (
                     <tr><td colSpan={5} className="text-center text-base-content/50 py-6">No users found.</td></tr>
                   ) : data.items.map((u) => (
-                    <tr key={u.id}>
+                    <tr
+                      key={u.id}
+                      className="hover cursor-pointer"
+                      onClick={() => navigate(`/admin/users/${u.id}`)}
+                    >
                       <td className="text-base-content/50 text-xs">{u.id}</td>
                       <td>{u.email}</td>
                       <td>
@@ -120,7 +126,7 @@ export default function AdminUsersPage() {
                         </span>
                       </td>
                       <td className="text-xs text-base-content/60">{new Date(u.created_at).toLocaleDateString()}</td>
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         <select
                           className="select select-bordered select-xs"
                           value={u.role}

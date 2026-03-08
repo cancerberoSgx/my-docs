@@ -36,6 +36,7 @@ export default function App() {
         <Route path="/account" element={<RequireAuth><AccountPage /></RequireAuth>} />
         <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
         <Route path="/admin/users" element={<RequireRole role={UserRole.Root}><AdminUsersPage /></RequireRole>} />
+        <Route path="/admin/users/:userId" element={<RequireRole role={UserRole.Root}><AccountPage /></RequireRole>} />
         <Route path="/admin/documents" element={<RequireRole role={UserRole.Root}><AdminDocumentsPage /></RequireRole>} />
         <Route path="/admin/lists" element={<RequireRole role={UserRole.Root}><AdminListsPage /></RequireRole>} />
         <Route path="*" element={<Navigate to="/lists" replace />} />
