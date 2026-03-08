@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, JwtPayload } from '../auth';
 import { AppError } from '../errors';
+import { DocumentType } from '../enums';
 import * as listsService from '../services/listsService';
 
 const router = Router();
@@ -371,7 +372,7 @@ router.post('/lists/:listId/documents', requireAuth, async (req: Request, res: R
         user.userId,
         url.trim(),
         platform.trim(),
-        type || 'webpage',
+        type || DocumentType.Webpage,
         description?.trim() || null,
         type_image || null,
       )

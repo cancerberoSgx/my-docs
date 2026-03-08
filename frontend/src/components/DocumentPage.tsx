@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, Doc, DocumentStatus } from '../api';
+import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, Doc, DocumentStatus as DocumentStatusShape } from '../api';
+import { DocumentStatus, DocumentType, DocumentAction } from '../enums';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
 import { StatusBadge } from './StatusBadge';
@@ -30,7 +31,7 @@ export default function DocumentPage() {
   const [preparing, setPreparing] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  function applyStatus(s: DocumentStatus) {
+  function applyStatus(s: DocumentStatusShape) {
     setStatus(s.status);
     setStatusError(s.status_change_error);
     setResolvedUrl(s.resolved_url);
@@ -82,7 +83,7 @@ export default function DocumentPage() {
 
   // Poll every 3s while pending
   useEffect(() => {
-    if (status !== 'pending') {
+    if (status !== DocumentStatus.Pending) {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
       return;
     }
@@ -96,7 +97,7 @@ export default function DocumentPage() {
 
   function handlePrepare() {
     setPreparing(true);
-    triggerDocumentAction(token, Number(docId), 'load')
+    triggerDocumentAction(token, Number(docId), DocumentAction.Load)
       .then(({ status: s }) => { setStatus(s); })
       .catch((err) => setStatusError(err.message))
       .finally(() => setPreparing(false));
@@ -167,7 +168,7 @@ export default function DocumentPage() {
               </div>
               <div className="flex items-center gap-2">
                 {status && <StatusBadge status={status} />}
-                {doc?.type === 'youtube' && (status === 'empty' || status === 'ready') && (
+                {doc?.type === DocumentType.Youtube && (status === DocumentStatus.Empty || status === DocumentStatus.Ready) && (
                   <button
                     className="btn btn-sm btn-outline"
                     onClick={handlePrepare}
@@ -178,10 +179,10 @@ export default function DocumentPage() {
                 )}
               </div>
             </div>
-            {status === 'error' && statusError && (
+            {status === DocumentStatus.Error && statusError && (
               <p className="text-error text-xs">{statusError}</p>
             )}
-            {status === 'ready' && resolvedUrl && (
+            {status === DocumentStatus.Ready && resolvedUrl && (
               <div className="text-xs text-base-content/60 flex flex-col gap-0.5">
                 <a href={resolvedUrl} target="_blank" rel="noreferrer" className="link link-primary truncate">
                   {resolvedUrl}

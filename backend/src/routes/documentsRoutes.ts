@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, JwtPayload } from '../auth';
 import { AppError } from '../errors';
+import { DocumentType } from '../enums';
 import * as listsService from '../services/listsService';
 
 const router = Router();
@@ -36,7 +37,7 @@ router.put('/documents/:docId', requireAuth, async (req: Request, res: Response)
       await listsService.updateDocument(Number(req.params.docId), user.userId, {
         url: url.trim(),
         description: description?.trim() || null,
-        type: type || 'webpage',
+        type: type || DocumentType.Webpage,
         type_image: type_image || null,
       })
     );

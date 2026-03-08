@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { DocumentType } from '../src/enums';
 import request from 'supertest';
 import { app } from '../src/app';
 import { db, runMigrations } from '../src/db';
@@ -26,8 +27,8 @@ beforeAll(async () => {
     .set(authHeader(token))
     .send({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      platform: 'youtube',
-      type: 'youtube',
+      platform: DocumentType.Youtube,
+      type: DocumentType.Youtube,
       description: 'Never gonna give you up',
       type_image: '/icons/youtube.svg',
     });
@@ -45,7 +46,7 @@ describe('GET /api/documentType', () => {
     const res = await request(app)
       .get('/api/documentType?url=https://www.youtube.com/watch?v=abc');
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('youtube');
+    expect(res.body.type).toBe(DocumentType.Youtube);
     expect(res.body.type_image).toBe('/icons/youtube.svg');
   });
 
@@ -53,14 +54,14 @@ describe('GET /api/documentType', () => {
     const res = await request(app)
       .get('/api/documentType?url=https://youtu.be/abc');
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('youtube');
+    expect(res.body.type).toBe(DocumentType.Youtube);
   });
 
   it('returns webpage type and icon for any other URL', async () => {
     const res = await request(app)
       .get('/api/documentType?url=https://example.com/article');
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('webpage');
+    expect(res.body.type).toBe(DocumentType.Webpage);
     expect(res.body.type_image).toBe('/icons/webpage.svg');
   });
 
@@ -68,7 +69,7 @@ describe('GET /api/documentType', () => {
     const res = await request(app)
       .get('/api/documentType?url=not-a-url');
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('webpage');
+    expect(res.body.type).toBe(DocumentType.Webpage);
   });
 });
 
@@ -81,8 +82,8 @@ describe('POST /api/lists/:listId/documents — new fields', () => {
       .set(authHeader(token))
       .send({
         url: 'https://example.com/page',
-        platform: 'webpage',
-        type: 'webpage',
+        platform: DocumentType.Webpage,
+        type: DocumentType.Webpage,
         description: 'An example page',
         type_image: '/icons/webpage.svg',
       });
@@ -90,14 +91,14 @@ describe('POST /api/lists/:listId/documents — new fields', () => {
     expect(res.status).toBe(201);
     expect(res.body.description).toBe('An example page');
     expect(res.body.type_image).toBe('/icons/webpage.svg');
-    expect(res.body.type).toBe('webpage');
+    expect(res.body.type).toBe(DocumentType.Webpage);
   });
 
   it('description defaults to null when omitted', async () => {
     const res = await request(app)
       .post(`/api/lists/${listId}/documents`)
       .set(authHeader(token))
-      .send({ url: 'https://example.com/no-desc', platform: 'webpage', type: 'webpage' });
+      .send({ url: 'https://example.com/no-desc', platform: DocumentType.Webpage, type: DocumentType.Webpage});
 
     expect(res.status).toBe(201);
     expect(res.body.description).toBeNull();
@@ -107,7 +108,7 @@ describe('POST /api/lists/:listId/documents — new fields', () => {
     const res = await request(app)
       .post(`/api/lists/${listId}/documents`)
       .set(authHeader(token))
-      .send({ url: 'https://example.com/no-img', platform: 'webpage', type: 'webpage' });
+      .send({ url: 'https://example.com/no-img', platform: DocumentType.Webpage, type: DocumentType.Webpage});
 
     expect(res.status).toBe(201);
     expect(res.body.type_image).toBeNull();
@@ -125,7 +126,7 @@ describe('GET /api/documents/:docId', () => {
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(docId);
     expect(res.body.url).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-    expect(res.body.type).toBe('youtube');
+    expect(res.body.type).toBe(DocumentType.Youtube);
     expect(res.body.type_image).toBe('/icons/youtube.svg');
     expect(res.body.description).toBe('Never gonna give you up');
   });
@@ -169,14 +170,14 @@ describe('PUT /api/documents/:docId', () => {
       .send({
         url: 'https://www.youtube.com/watch?v=updated',
         description: 'Updated description',
-        type: 'youtube',
+        type: DocumentType.Youtube,
         type_image: '/icons/youtube.svg',
       });
 
     expect(res.status).toBe(200);
     expect(res.body.url).toBe('https://www.youtube.com/watch?v=updated');
     expect(res.body.description).toBe('Updated description');
-    expect(res.body.type).toBe('youtube');
+    expect(res.body.type).toBe(DocumentType.Youtube);
     expect(res.body.type_image).toBe('/icons/youtube.svg');
   });
 
@@ -194,7 +195,7 @@ describe('PUT /api/documents/:docId', () => {
     const res = await request(app)
       .put(`/api/documents/${docId}`)
       .set(authHeader(token))
-      .send({ url: 'https://www.youtube.com/watch?v=updated', description: '', type: 'youtube', type_image: null });
+      .send({ url: 'https://www.youtube.com/watch?v=updated', description: '', type: DocumentType.Youtube, type_image: null });
 
     expect(res.status).toBe(200);
     expect(res.body.description).toBeNull();
@@ -207,12 +208,12 @@ describe('PUT /api/documents/:docId', () => {
       .send({
         url: 'https://example.com/converted',
         description: null,
-        type: 'webpage',
+        type: DocumentType.Webpage,
         type_image: '/icons/webpage.svg',
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('webpage');
+    expect(res.body.type).toBe(DocumentType.Webpage);
     expect(res.body.type_image).toBe('/icons/webpage.svg');
   });
 
@@ -220,7 +221,7 @@ describe('PUT /api/documents/:docId', () => {
     const res = await request(app)
       .put(`/api/documents/${docId}`)
       .set(authHeader(token))
-      .send({ description: 'no url', type: 'webpage' });
+      .send({ description: 'no url', type: DocumentType.Webpage});
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('url is required');
@@ -229,7 +230,7 @@ describe('PUT /api/documents/:docId', () => {
   it('returns 401 without a token', async () => {
     const res = await request(app)
       .put(`/api/documents/${docId}`)
-      .send({ url: 'https://example.com', type: 'webpage' });
+      .send({ url: 'https://example.com', type: DocumentType.Webpage});
     expect(res.status).toBe(401);
   });
 
@@ -237,7 +238,7 @@ describe('PUT /api/documents/:docId', () => {
     const res = await request(app)
       .put('/api/documents/999999')
       .set(authHeader(token))
-      .send({ url: 'https://example.com', type: 'webpage' });
+      .send({ url: 'https://example.com', type: DocumentType.Webpage});
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('Document not found');
@@ -248,7 +249,7 @@ describe('PUT /api/documents/:docId', () => {
     const res = await request(app)
       .put(`/api/documents/${docId}`)
       .set(authHeader(otherToken))
-      .send({ url: 'https://evil.com', type: 'webpage' });
+      .send({ url: 'https://evil.com', type: DocumentType.Webpage});
 
     expect(res.status).toBe(404);
   });

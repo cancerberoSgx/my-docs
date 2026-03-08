@@ -1,6 +1,7 @@
 import { AppError } from '../errors';
 import * as listsRepo from '../repositories/listsRepository';
 import * as youtubeStatusManager from './youtubeStatusManager';
+import { DocumentStatus, DocumentType, DocumentAction } from '../enums';
 import type { List, Doc, DocumentStatusResult } from '../repositories/listsRepository';
 
 const VALID_ORDER_COLS = ['name', 'created_at', 'updated_at'];
@@ -47,7 +48,7 @@ export async function addDocumentToList(
 ): Promise<Doc> {
   const list = await listsRepo.getListById(listId, userId);
   if (!list) throw new AppError(404, 'List not found');
-  const status = type === 'webpage' ? 'ready' : 'empty';
+  const status = type === DocumentType.Webpage ? DocumentStatus.Ready : DocumentStatus.Empty;
   const doc = await listsRepo.createDocument(userId, url, platform, type, description, type_image, status);
   await listsRepo.addDocumentToList(listId, doc.id);
   return doc;
@@ -83,20 +84,20 @@ export async function triggerDocumentAction(
   userId: number,
   action: string,
 ): Promise<{ status: string }> {
-  if (action !== 'load') throw new AppError(400, 'Unknown action');
+  if (action !== DocumentAction.Load) throw new AppError(400, 'Unknown action');
   const doc = await listsRepo.getDocumentById(docId, userId);
   if (!doc) throw new AppError(404, 'Document not found');
-  if (doc.type !== 'youtube') throw new AppError(400, 'Action only supported for youtube documents');
-  if (doc.status !== 'empty' && doc.status !== 'ready') throw new AppError(409, 'Document must be in empty or ready status');
+  if (doc.type !== DocumentType.Youtube) throw new AppError(400, 'Action only supported for youtube documents');
+  if (doc.status !== DocumentStatus.Empty && doc.status !== DocumentStatus.Ready) throw new AppError(409, 'Document must be in empty or ready status');
   await youtubeStatusManager.triggerLoad(docId);
-  return { status: 'pending' };
+  return { status: DocumentStatus.Pending };
 }
 
 export function detectDocumentType(url: string): { type: string; type_image: string } {
-  let type = 'webpage';
+  let type: DocumentType = DocumentType.Webpage;
   try {
     const host = new URL(url).hostname.replace(/^www\./, '');
-    if (host.includes('youtube.com') || host === 'youtu.be') type = 'youtube';
+    if (host.includes('youtube.com') || host === 'youtu.be') type = DocumentType.Youtube;
   } catch { /* keep webpage */ }
-  return { type, type_image: type === 'youtube' ? '/icons/youtube.svg' : '/icons/webpage.svg' };
+  return { type, type_image: type === DocumentType.Youtube ? '/icons/youtube.svg' : '/icons/webpage.svg' };
 }

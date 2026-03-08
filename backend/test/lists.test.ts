@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { DocumentType } from '../src/enums';
 import request from 'supertest';
 import { app } from '../src/app';
 import { db, runMigrations } from '../src/db';
@@ -126,13 +127,13 @@ describe('Lists', () => {
         .set(authHeader(token))
         .send({
           url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-          platform: 'youtube',
-          type: 'youtube',
+          platform: DocumentType.Youtube,
+          type: DocumentType.Youtube,
         });
 
       expect(res.status).toBe(201);
       expect(res.body.url).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-      expect(res.body.type).toBe('youtube');
+      expect(res.body.type).toBe(DocumentType.Youtube);
     });
 
     it('adds a second document', async () => {
@@ -159,7 +160,7 @@ describe('Lists', () => {
       const res = await request(app)
         .post(`/api/lists/${listId}/documents`)
         .set(authHeader(token))
-        .send({ platform: 'youtube' });
+        .send({ platform: DocumentType.Youtube });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('url is required');

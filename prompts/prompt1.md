@@ -262,3 +262,7 @@ resolved_extra: jsonb
 # prompt: re-prepare youtube documents
 
 in the UI even if it's "ready" user can post a "load" action again
+
+# prompt use enums 
+
+move all hardcoded enums like document status to enums instead of using hardcoded  both in backend and frontend projects and tests

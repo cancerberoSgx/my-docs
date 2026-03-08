@@ -4,8 +4,9 @@ import { getList, addDocument, getDocumentType, Doc } from '../api';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
 import { StatusBadge } from './StatusBadge';
+import { DocumentStatus, DocumentType } from '../enums';
 
-const STATUS_FILTERS = ['all', 'empty', 'pending', 'ready', 'error'] as const;
+const STATUS_FILTERS = ['all', ...Object.values(DocumentStatus)] as const;
 type StatusFilter = typeof STATUS_FILTERS[number];
 
 function AddDocumentModal({
@@ -42,7 +43,7 @@ function AddDocumentModal({
           setDetectedType(type);
           setDetectedTypeImage(type_image);
         })
-        .catch(() => { setDetectedType('webpage'); setDetectedTypeImage('/icons/webpage.svg'); })
+        .catch(() => { setDetectedType(DocumentType.Webpage); setDetectedTypeImage('/icons/webpage.svg'); })
         .finally(() => setDetecting(false));
     }, 400);
     return () => clearTimeout(timer);
@@ -211,7 +212,7 @@ export default function DocumentList() {
                 >
                   <div className="card-body py-4">
                     <div className="flex items-start gap-3">
-                      <DocTypeBadge type={doc.type || 'webpage'} type_image={doc.type_image} />
+                      <DocTypeBadge type={doc.type || DocumentType.Webpage} type_image={doc.type_image} />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm truncate text-primary">{doc.url}</p>
                         {doc.description && (
