@@ -266,3 +266,24 @@ in the UI even if it's "ready" user can post a "load" action again
 # prompt use enums 
 
 move all hardcoded enums like document status to enums instead of using hardcoded  both in backend and frontend projects and tests
+
+# prompt list filter by type
+in the lists document page, implement filter by type. 
+Also make sure filters UI is well extructured and expandable for mobile usage so we can add more without visual problems
+
+
+future: 
+
+add a menu for settings, account, docs, etc
+mobile first swith icons instead of labels
+menus: 
+ * session ->   
+   * log out if logged in
+   * login if no session
+   * register if no sessions
+ * settings ->
+    * account: let the user see their account information, and change the password and delete account
+    * settings -> settings navigate to an empty settings screen
+ * Docs ->
+   * dummy links to home page, about us, 
+   * link to apidocs

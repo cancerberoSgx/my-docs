@@ -6,8 +6,42 @@ import { DocTypeBadge } from './DocTypeIcon';
 import { StatusBadge } from './StatusBadge';
 import { DocumentStatus, DocumentType } from '../enums';
 
-const STATUS_FILTERS = ['all', ...Object.values(DocumentStatus)] as const;
-type StatusFilter = typeof STATUS_FILTERS[number];
+type StatusFilter = 'all' | DocumentStatus;
+type TypeFilter = 'all' | DocumentType;
+
+function FilterRow<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly T[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+      <span className="text-xs font-semibold uppercase tracking-wide text-base-content/50 w-14 shrink-0">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            className={`btn btn-xs ${value === opt ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => onChange(opt)}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const STATUS_OPTIONS = ['all', ...Object.values(DocumentStatus)] as const;
+const TYPE_OPTIONS = ['all', ...Object.values(DocumentType)] as const;
 
 function AddDocumentModal({
   listId,
@@ -126,6 +160,7 @@ export default function DocumentList() {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   useEffect(() => {
     setLoading(true);
@@ -173,16 +208,11 @@ export default function DocumentList() {
         {error && <div className="alert alert-error"><span>{error}</span></div>}
 
         {!loading && !error && (
-          <div className="flex gap-2 flex-wrap mb-4">
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f}
-                className={`btn btn-xs ${statusFilter === f ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setStatusFilter(f)}
-              >
-                {f}
-              </button>
-            ))}
+          <div className="card bg-base-100 shadow mb-4">
+            <div className="card-body py-3 px-4 flex flex-col gap-2">
+              <FilterRow label="Type" options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} />
+              <FilterRow label="Status" options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
+            </div>
           </div>
         )}
 
@@ -195,11 +225,14 @@ export default function DocumentList() {
         )}
 
         {!loading && docs.length > 0 && (() => {
-          const filtered = statusFilter === 'all' ? docs : docs.filter((d) => d.status === statusFilter);
+          const filtered = docs.filter((d) =>
+            (statusFilter === 'all' || d.status === statusFilter) &&
+            (typeFilter === 'all' || d.type === typeFilter)
+          );
           return filtered.length === 0 ? (
             <div className="card bg-base-100 shadow">
               <div className="card-body items-center text-center text-base-content/60">
-                <p>No documents with status <strong>{statusFilter}</strong>.</p>
+                <p>No documents match the current filters.</p>
               </div>
             </div>
           ) : (
