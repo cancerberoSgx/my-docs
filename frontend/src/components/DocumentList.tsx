@@ -153,7 +153,6 @@ export default function DocumentList() {
   const listId = Number(listIdParam);
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.token)!;
-  const clearToken = useAuthStore((s) => s.clearToken);
   const [listName, setListName] = useState('');
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,15 +168,9 @@ export default function DocumentList() {
         setListName(data.name);
         setDocs(data.documents);
       })
-      .catch((err) => {
-        if (err.message === 'Unauthorized' || err.message === 'Invalid or expired token') {
-          clearToken();
-        } else {
-          setError(err.message);
-        }
-      })
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [token, listId, clearToken]);
+  }, [token, listId]);
 
   return (
     <div className="min-h-screen bg-base-200 px-4 py-8">
@@ -189,14 +182,9 @@ export default function DocumentList() {
             </button>
             <h1 className="text-2xl font-bold">{listName}</h1>
           </div>
-          <div className="flex gap-2">
-            <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-              + Add
-            </button>
-            <button className="btn btn-ghost btn-sm" onClick={clearToken}>
-              Sign out
-            </button>
-          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+            + Add
+          </button>
         </div>
 
         {loading && (

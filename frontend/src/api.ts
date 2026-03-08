@@ -7,6 +7,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return data as T;
 }
 
+export interface Me {
+  id: number;
+  email: string;
+  role: string;
+}
+
 export function login(email: string, password: string) {
   return request<{ token: string }>('/auth', {
     method: 'POST',
@@ -134,6 +140,28 @@ export interface DocumentStatus {
 export function getDocumentStatus(token: string, docId: number) {
   return request<DocumentStatus>(`/documents/${docId}/status`, {
     headers: authHeaders(token),
+  });
+}
+
+export function getMe(token: string) {
+  return request<Me>('/me', { headers: authHeaders(token) });
+}
+
+export function changePassword(token: string, currentPassword: string, newPassword: string) {
+  return request<{ message: string }>('/me/password', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+export function deleteAccount(token: string, password: string) {
+  return fetch(`${BASE}/me`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ password }),
+  }).then((res) => {
+    if (!res.ok) return res.json().then((d) => { throw new Error(d.error || 'Request failed'); });
   });
 }
 

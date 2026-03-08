@@ -1,21 +1,31 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuthStore } from './store';
+import Layout from './components/Layout';
 import AuthForm from './components/AuthForm';
 import ListsView from './components/ListsView';
 import DocumentList from './components/DocumentList';
 import DocumentPage from './components/DocumentPage';
+import AccountPage from './components/AccountPage';
+import SettingsPage from './components/SettingsPage';
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const token = useAuthStore((s) => s.token);
+  return token ? <>{children}</> : <Navigate to="/login" replace />;
+}
 
 export default function App() {
-  const token = useAuthStore((s) => s.token);
-
-  if (!token) return <AuthForm />;
-
   return (
-    <Routes>
-      <Route path="/lists" element={<ListsView />} />
-      <Route path="/lists/:listId" element={<DocumentList />} />
-      <Route path="/lists/:listId/documents/:docId" element={<DocumentPage />} />
-      <Route path="*" element={<Navigate to="/lists" replace />} />
-    </Routes>
+    <Layout>
+      <Routes>
+        <Route path="/login" element={<AuthForm initialMode="login" />} />
+        <Route path="/register" element={<AuthForm initialMode="register" />} />
+        <Route path="/lists" element={<RequireAuth><ListsView /></RequireAuth>} />
+        <Route path="/lists/:listId" element={<RequireAuth><DocumentList /></RequireAuth>} />
+        <Route path="/lists/:listId/documents/:docId" element={<RequireAuth><DocumentPage /></RequireAuth>} />
+        <Route path="/account" element={<RequireAuth><AccountPage /></RequireAuth>} />
+        <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+        <Route path="*" element={<Navigate to="/lists" replace />} />
+      </Routes>
+    </Layout>
   );
 }

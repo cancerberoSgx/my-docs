@@ -9,7 +9,6 @@ type SortOrder = 'asc' | 'desc';
 export default function ListsView() {
   const token = useAuthStore((s) => s.token)!;
   const navigate = useNavigate();
-  const clearToken = useAuthStore((s) => s.clearToken);
   const [lists, setLists] = useState<DocList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,15 +39,9 @@ export default function ListsView() {
     setLoading(true);
     getLists(token, sortField, sortOrder)
       .then(setLists)
-      .catch((err) => {
-        if (err.message === 'Unauthorized' || err.message === 'Invalid or expired token') {
-          clearToken();
-        } else {
-          setError(err.message);
-        }
-      })
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [token, sortField, sortOrder, clearToken]);
+  }, [token, sortField, sortOrder]);
 
   const filtered = lists.filter((l) =>
     l.name.toLowerCase().includes(filter.toLowerCase())
@@ -123,14 +116,9 @@ export default function ListsView() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">My Lists</h1>
-          <div className="flex gap-2">
-            <button className="btn btn-primary btn-sm" onClick={() => setShowCreate((v) => !v)}>
-              {showCreate ? 'Cancel' : 'New list'}
-            </button>
-            <button className="btn btn-ghost btn-sm" onClick={clearToken}>
-              Sign out
-            </button>
-          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowCreate((v) => !v)}>
+            {showCreate ? 'Cancel' : 'New list'}
+          </button>
         </div>
 
         {/* Create form */}

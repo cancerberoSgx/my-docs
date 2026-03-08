@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { login, register } from '../api';
 import { useAuthStore } from '../store';
 
-export default function AuthForm() {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+export default function AuthForm({ initialMode = 'login' }: { initialMode?: 'login' | 'register' }) {
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const setToken = useAuthStore((s) => s.setToken);
+  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,6 +20,7 @@ export default function AuthForm() {
       const fn = mode === 'login' ? login : register;
       const { token } = await fn(email, password);
       setToken(token);
+      navigate('/lists');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

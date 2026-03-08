@@ -4,6 +4,7 @@ import path from 'path';
 import authRoutes from './routes/authRoutes';
 import listRoutes from './routes/listRoutes';
 import documentsRoutes from './routes/documentsRoutes';
+import accountRoutes from './routes/accountRoutes';
 
 export const app = express();
 
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', authRoutes);
+app.use('/api', accountRoutes);
 app.use('/api', listRoutes);
 app.use('/api', documentsRoutes);
 

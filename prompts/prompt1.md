@@ -272,8 +272,7 @@ in the lists document page, implement filter by type.
 Also make sure filters UI is well extructured and expandable for mobile usage so we can add more without visual problems
 
 
-future: 
-
+# prompt . ui menu
 add a menu for settings, account, docs, etc
 mobile first swith icons instead of labels
 menus: 
