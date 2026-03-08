@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getList, addDocument, getDocumentType, Doc } from '../api';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
@@ -152,6 +152,8 @@ export default function DocumentList() {
   const { listId: listIdParam } = useParams<{ listId: string }>();
   const listId = Number(listIdParam);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith('/admin');
   const token = useAuthStore((s) => s.token)!;
   const [listName, setListName] = useState('');
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -177,7 +179,7 @@ export default function DocumentList() {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/lists')}>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate(isAdmin ? '/admin/lists' : '/lists')}>
               ← Back
             </button>
             <h1 className="text-2xl font-bold">{listName}</h1>
@@ -229,7 +231,7 @@ export default function DocumentList() {
                 <button
                   key={doc.id}
                   className="card bg-base-100 shadow text-left w-full hover:shadow-md transition-shadow"
-                  onClick={() => navigate(`/lists/${listId}/documents/${doc.id}`)}
+                  onClick={() => navigate(isAdmin ? `/admin/lists/${listId}/documents/${doc.id}` : `/lists/${listId}/documents/${doc.id}`)}
                 >
                   <div className="card-body py-4">
                     <div className="flex items-start gap-3">

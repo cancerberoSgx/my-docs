@@ -7,7 +7,7 @@ import { DocTypeBadge } from './DocTypeIcon';
 import { StatusBadge } from './StatusBadge';
 
 export default function DocumentPage() {
-  const { listId, docId } = useParams<{ listId: string; docId: string }>();
+  const { docId } = useParams<{ listId?: string; docId: string }>();
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.token)!;
   const clearToken = useAuthStore((s) => s.clearToken);
@@ -145,7 +145,7 @@ export default function DocumentPage() {
       <div className="max-w-xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/lists/${listId}`)}>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate(-1)}>
             ← Back
           </button>
           <a

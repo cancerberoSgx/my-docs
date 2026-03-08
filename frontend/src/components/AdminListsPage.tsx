@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminGetLists, AdminList, Paginated } from '../api';
 import { useAuthStore } from '../store';
 import Pagination from './Pagination';
@@ -7,6 +8,7 @@ const LIMIT = 20;
 
 export default function AdminListsPage() {
   const token = useAuthStore((s) => s.token)!;
+  const navigate = useNavigate();
   const [data, setData] = useState<Paginated<AdminList> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -91,7 +93,11 @@ export default function AdminListsPage() {
                   {data.items.length === 0 ? (
                     <tr><td colSpan={6} className="text-center text-base-content/50 py-6">No lists found.</td></tr>
                   ) : data.items.map((l) => (
-                    <tr key={l.id}>
+                    <tr
+                      key={l.id}
+                      className="hover cursor-pointer"
+                      onClick={() => navigate(`/admin/lists/${l.id}`)}
+                    >
                       <td className="text-base-content/50 text-xs">{l.id}</td>
                       <td className="text-xs text-base-content/60">{l.user_id}</td>
                       <td className="font-medium">{l.name}</td>

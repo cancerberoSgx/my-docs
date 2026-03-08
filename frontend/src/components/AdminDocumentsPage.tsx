@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminGetDocuments, Doc, Paginated } from '../api';
 
 type AdminDoc = Doc & { created_at: string };
@@ -10,6 +11,7 @@ const LIMIT = 20;
 
 export default function AdminDocumentsPage() {
   const token = useAuthStore((s) => s.token)!;
+  const navigate = useNavigate();
   const [data, setData] = useState<Paginated<AdminDoc> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -107,10 +109,14 @@ export default function AdminDocumentsPage() {
                   {data.items.length === 0 ? (
                     <tr><td colSpan={6} className="text-center text-base-content/50 py-6">No documents found.</td></tr>
                   ) : data.items.map((d) => (
-                    <tr key={d.id}>
+                    <tr
+                      key={d.id}
+                      className="hover cursor-pointer"
+                      onClick={() => navigate(`/admin/documents/${d.id}`)}
+                    >
                       <td className="text-base-content/50 text-xs">{d.id}</td>
                       <td className="text-xs text-base-content/60">{d.user_id}</td>
-                      <td className="max-w-xs">
+                      <td className="max-w-xs" onClick={(e) => e.stopPropagation()}>
                         <a href={d.url} target="_blank" rel="noreferrer" className="link link-primary text-xs truncate block">{d.url}</a>
                       </td>
                       <td><span className="badge badge-sm badge-ghost">{d.type}</span></td>

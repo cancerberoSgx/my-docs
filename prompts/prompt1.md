@@ -319,3 +319,6 @@ issue: a root users are not seeing menues:
 a root user , user list, can click a user and show user details and modify them
 re-use the account screen if possible
 backend: only the root user can change other users. An admin uuser can only edit himself
+
+* a root user, in the lists listing, can click a list and see its details, reuse current list page
+* a root user, in the documents list, can click a document and see its details. Reuse current document details page
