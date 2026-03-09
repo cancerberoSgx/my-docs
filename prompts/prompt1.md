@@ -342,3 +342,17 @@ create these tools records
  the root user have a "tools" menu where he can list all tools and clicking a tool opens the tool screen shoing its details and which documents it applies. root cannot add, edit  or remove tool, that can only be done by a developer since they requires an implkementation code
 
 on current change document status endpoint, the client myust pass the toolId. In the UI, instead of displaying document status and "prepare" action buttons, display this information for the list of tools that apply to the document type
+
+
+# prompt: doc tools actions
+
+tools define actions which can be trigger on certain document (type). The default action is "load" and all tools have it, but particular tools can trigger other actions such as "download", "
+also tools accept params (json object arbitrary signature) when called
+in db model this in two tables: actions (name, description, paramsSchema) and toolActions relational table 1 tool -> n actions
+there is a default tool action called "load" and all existing tools support "load"
+in endpoint PUT /api/documents/3/status besides the tool also pass the "action" and the "params"
+in PUT /api/documents/3/status there'a a ToolsService that handle the call and redirect to a tool implementation accepting action and params
+implement each tool in a separate implementation file, for now they only sleep 5 seconds
+
+
+# prompt

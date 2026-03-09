@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getAllTools, getTool, ToolWithTypes } from '../api';
+import { getAllTools, getTool, ToolFull } from '../api';
 import { useAuthStore } from '../store';
 
 export function AdminToolsPage() {
   const token = useAuthStore((s) => s.token)!;
   const navigate = useNavigate();
-  const [tools, setTools] = useState<ToolWithTypes[]>([]);
+  const [tools, setTools] = useState<ToolFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -70,7 +70,7 @@ export function AdminToolDetailPage() {
   const { toolId } = useParams<{ toolId: string }>();
   const token = useAuthStore((s) => s.token)!;
   const navigate = useNavigate();
-  const [tool, setTool] = useState<ToolWithTypes | null>(null);
+  const [tool, setTool] = useState<ToolFull | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -122,6 +122,40 @@ export function AdminToolDetailPage() {
                     <span key={dt} className="badge badge-ghost">{dt}</span>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            <div className="card bg-base-100 shadow">
+              <div className="card-body gap-3">
+                <h2 className="card-title text-base">Actions</h2>
+                {tool.actions.length === 0 ? (
+                  <span className="text-sm text-base-content/50">No actions defined.</span>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="table table-sm w-full">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Description</th>
+                          <th>Params schema</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tool.actions.map((act) => (
+                          <tr key={act.name}>
+                            <td className="font-mono text-sm">{act.name}</td>
+                            <td className="text-sm text-base-content/70">{act.description}</td>
+                            <td>
+                              {act.params_schema
+                                ? <pre className="text-xs bg-base-200 rounded p-1">{JSON.stringify(act.params_schema, null, 2)}</pre>
+                                : <span className="text-xs text-base-content/40">—</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
 

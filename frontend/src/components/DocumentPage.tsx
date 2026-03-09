@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, getToolsByType, Doc, DocumentStatus as DocumentStatusShape, Tool } from '../api';
+import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, getToolsByType, Doc, DocumentStatus as DocumentStatusShape, ToolFull } from '../api';
 import { DocumentStatus } from '../enums';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
@@ -28,8 +28,8 @@ export default function DocumentPage() {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [resolvedMimetype, setResolvedMimetype] = useState<string | null>(null);
   const [resolvedExtra, setResolvedExtra] = useState<Record<string, unknown> | null>(null);
-  const [tools, setTools] = useState<Tool[]>([]);
-  const [runningTool, setRunningTool] = useState<number | null>(null);
+  const [tools, setTools] = useState<ToolFull[]>([]);
+  const [runningKey, setRunningKey] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function applyStatus(s: DocumentStatusShape) {
@@ -97,12 +97,13 @@ export default function DocumentPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [status, token, docId]);
 
-  function handleRunTool(toolId: number) {
-    setRunningTool(toolId);
-    triggerDocumentAction(token, Number(docId), toolId)
+  function handleRunTool(toolId: number, action: string) {
+    const key = `${toolId}:${action}`;
+    setRunningKey(key);
+    triggerDocumentAction(token, Number(docId), toolId, action)
       .then(({ status: s }) => { setStatus(s); })
       .catch((err) => setStatusError(err.message))
-      .finally(() => setRunningTool(null));
+      .finally(() => setRunningKey(null));
   }
 
   function handleSave(e: React.FormEvent) {
@@ -194,20 +195,29 @@ export default function DocumentPage() {
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-base-content/50">Tools</p>
                 {tools.map((tool) => (
-                  <div key={tool.id} className="flex items-center justify-between gap-3 py-1">
+                  <div key={tool.id} className="flex items-start justify-between gap-3 py-1">
                     <div className="min-w-0">
                       <p className="text-sm font-medium">{tool.name}</p>
                       <p className="text-xs text-base-content/60">{tool.description}</p>
                     </div>
-                    <button
-                      className="btn btn-sm btn-outline shrink-0"
-                      onClick={() => handleRunTool(tool.id)}
-                      disabled={runningTool !== null || status === DocumentStatus.Pending}
-                    >
-                      {runningTool === tool.id
-                        ? <span className="loading loading-spinner loading-xs" />
-                        : 'Run'}
-                    </button>
+                    <div className="flex flex-wrap gap-1 shrink-0">
+                      {tool.actions.map((act) => {
+                        const key = `${tool.id}:${act.name}`;
+                        return (
+                          <button
+                            key={act.name}
+                            className="btn btn-xs btn-outline"
+                            title={act.description}
+                            onClick={() => handleRunTool(tool.id, act.name)}
+                            disabled={runningKey !== null || status === DocumentStatus.Pending}
+                          >
+                            {runningKey === key
+                              ? <span className="loading loading-spinner loading-xs" />
+                              : act.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>

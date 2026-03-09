@@ -1,7 +1,5 @@
 import { AppError } from '../errors';
 import * as listsRepo from '../repositories/listsRepository';
-import * as toolsRepo from '../repositories/toolsRepository';
-import * as youtubeStatusManager from './youtubeStatusManager';
 import { DocumentStatus, DocumentType } from '../enums';
 import type { List, Doc, DocumentStatusResult } from '../repositories/listsRepository';
 
@@ -81,28 +79,6 @@ export async function getDocumentStatus(
   return row;
 }
 
-export async function triggerDocumentAction(
-  docId: number,
-  userId: number | null,
-  toolId: number,
-): Promise<{ status: string }> {
-  const doc = await listsRepo.getDocumentById(docId, userId);
-  if (!doc) throw new AppError(404, 'Document not found');
-  const tool = await toolsRepo.getToolById(toolId);
-  if (!tool) throw new AppError(404, 'Tool not found');
-  if (!tool.documentTypes.includes(doc.type)) {
-    throw new AppError(400, `Tool '${tool.name}' does not apply to ${doc.type} documents`);
-  }
-  if (doc.status !== DocumentStatus.Empty && doc.status !== DocumentStatus.Ready) {
-    throw new AppError(409, 'Document must be in empty or ready status');
-  }
-  if (doc.type === DocumentType.Youtube) {
-    await youtubeStatusManager.triggerLoad(docId);
-  } else {
-    await listsRepo.recordStatusChange(docId, DocumentStatus.Pending, null);
-  }
-  return { status: DocumentStatus.Pending };
-}
 
 export function detectDocumentType(url: string): { type: string; type_image: string } {
   let type: DocumentType = DocumentType.Webpage;

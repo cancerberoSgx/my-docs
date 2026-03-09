@@ -234,11 +234,17 @@ export function deleteAccount(token: string, password: string) {
   });
 }
 
-export function triggerDocumentAction(token: string, docId: number, toolId: number) {
+export function triggerDocumentAction(
+  token: string,
+  docId: number,
+  toolId: number,
+  action: string,
+  params: Record<string, unknown> = {},
+) {
   return request<{ status: string }>(`/documents/${docId}/status`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ toolId }),
+    body: JSON.stringify({ toolId, action, params }),
   });
 }
 
@@ -250,20 +256,28 @@ export interface Tool {
   description: string;
 }
 
-export interface ToolWithTypes extends Tool {
+export interface ToolAction {
+  id: number;
+  name: string;
+  description: string;
+  params_schema: Record<string, unknown> | null;
+}
+
+export interface ToolFull extends Tool {
   documentTypes: string[];
+  actions: ToolAction[];
 }
 
 export function getToolsByType(token: string, documentType: string) {
-  return request<Tool[]>(`/tools?documentType=${encodeURIComponent(documentType)}`, {
+  return request<ToolFull[]>(`/tools?documentType=${encodeURIComponent(documentType)}`, {
     headers: authHeaders(token),
   });
 }
 
 export function getAllTools(token: string) {
-  return request<ToolWithTypes[]>('/tools', { headers: authHeaders(token) });
+  return request<ToolFull[]>('/tools', { headers: authHeaders(token) });
 }
 
 export function getTool(token: string, toolId: number) {
-  return request<ToolWithTypes>(`/tools/${toolId}`, { headers: authHeaders(token) });
+  return request<ToolFull>(`/tools/${toolId}`, { headers: authHeaders(token) });
 }

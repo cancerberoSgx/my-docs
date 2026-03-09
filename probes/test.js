@@ -1,3 +1,5 @@
+const { log } = require('console');
+
 function test1() {
 
 
@@ -25,6 +27,7 @@ function test2() {
     (async () => {
         // Download audio (M4A format)
         const audioPath = await DownloadMusic('36GT2zI8lVA');
+        log('Audio downloaded to:', audioPath);
         const audioBuffer = fs.readFileSync(audioPath);
         fs.writeFileSync('tmp_audio.m4a', Buffer.from(audioBuffer));
 

@@ -3,6 +3,7 @@ import { requireRole, JwtPayload } from '../auth';
 import { AppError } from '../errors';
 import { DocumentType, UserRole } from '../enums';
 import * as listsService from '../services/listsService';
+import * as toolsService from '../services/toolsService';
 
 function scopedUserId(user: JwtPayload): number | null {
   return user.role === UserRole.Root ? null : user.userId;
@@ -61,13 +62,23 @@ router.get('/documents/:docId/status', requireRole(), async (req: Request, res: 
 
 router.put('/documents/:docId/status', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
-  const { toolId } = req.body;
+  const { toolId, action, params } = req.body;
   if (!toolId || typeof toolId !== 'number') {
     res.status(400).json({ error: 'toolId is required' });
     return;
   }
+  if (!action || typeof action !== 'string') {
+    res.status(400).json({ error: 'action is required' });
+    return;
+  }
   try {
-    res.json(await listsService.triggerDocumentAction(Number(req.params.docId), scopedUserId(user), toolId));
+    res.json(await toolsService.trigger(
+      Number(req.params.docId),
+      scopedUserId(user),
+      toolId,
+      action,
+      typeof params === 'object' && params !== null ? params : {},
+    ));
   } catch (err) {
     handleError(res, err);
   }
