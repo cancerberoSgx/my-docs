@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import authRoutes from './routes/authRoutes';
 import listRoutes from './routes/listRoutes';
 import documentsRoutes from './routes/documentsRoutes';
@@ -10,8 +11,12 @@ import toolsRoutes from './routes/toolsRoutes';
 
 export const app = express();
 
+const MEDIA_DIR = process.env.MEDIA_DIR ?? path.resolve(process.cwd(), 'media');
+if (!fs.existsSync(MEDIA_DIR)) fs.mkdirSync(MEDIA_DIR, { recursive: true });
+
 app.use(cors());
 app.use(express.json());
+app.use('/media', express.static(MEDIA_DIR));
 
 app.use('/api', authRoutes);
 app.use('/api', accountRoutes);

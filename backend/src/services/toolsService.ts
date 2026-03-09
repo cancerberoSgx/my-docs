@@ -25,8 +25,8 @@ export async function trigger(
     throw new AppError(400, `Tool '${tool.name}' does not support action '${action}'`);
   }
 
-  if (doc.status !== DocumentStatus.Empty && doc.status !== DocumentStatus.Ready) {
-    throw new AppError(409, 'Document must be in empty or ready status');
+  if (doc.status !== DocumentStatus.Empty && doc.status !== DocumentStatus.Ready&& doc.status !== DocumentStatus.Error) {
+    throw new AppError(409, 'Document must be in empty or ready or error status');
   }
 
   const impl = registry.get(tool.name);
@@ -34,7 +34,7 @@ export async function trigger(
 
   await listsRepo.recordStatusChange(docId, DocumentStatus.Pending, null, null, null, null, action, params);
 
-  impl.execute(docId, action, params)
+  impl.execute(doc, action, params)
     .then(({ url, mimetype, extra }) =>
       listsRepo.recordStatusChange(docId, DocumentStatus.Ready, null, url, mimetype, extra, action, params)
     )

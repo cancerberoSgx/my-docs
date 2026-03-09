@@ -358,3 +358,18 @@ implement each tool in a separate implementation file, for now they only sleep 5
 # prompt: doc status history list
 
 in the document page, there's a document which takes me to document status changelog which list all documentStatusHistory records with pagination and status filtering, displaying dates and status change in a table. default order is createdAt DESC
+
+in documentStatusHistory also save action and params. In the ui document status history screen display two columns action (action name)
+when user click an status change row sees the document status change screen displaying details about the change such is document, date, status, action ,params, etc
+
+
+# prompt youtube tool
+
+lets immplement youtube-audio and youtube-video tool which downloads youtube audio as mp3 and returns an accesible url to it so user cah listen to it in the frontend.
+
+First, we want a facade on FileSystem, which allows us to save the buffer and then obtain an url for it. Interface:
+ load(document, tool) -> Resource {url, mimetype}
+
+lets implement a local file storage that will just save downloaded resources into localhost. in the future we could have a aws s3 bucket or something else
+
+the local file storage implementation, ends up using backend/src/integrations/youtube/index.ts to download the file. You need to model a local storage or file tracking so we can know where the file url is generated locally and serve it as a public url so the frontend can access the audio file.

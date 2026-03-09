@@ -1,10 +1,7 @@
-import type { ToolResult } from './types';
+import { storage } from '../storage';
+import type { ToolDoc, ToolResult } from './types';
 
-export async function execute(docId: number, action: string, _params: Record<string, unknown>): Promise<ToolResult> {
-  await new Promise((resolve) => setTimeout(resolve, 5_000));
-  return {
-    url: `https://example.com/audio/${docId}.mp3`,
-    mimetype: 'audio/mpeg',
-    extra: { action },
-  };
+export async function execute(doc: ToolDoc, action: string, params: Record<string, unknown>): Promise<ToolResult> {
+  const resource = await storage.load(doc, { name: 'youtube-audio', action, params });
+  return { url: resource.url, mimetype: resource.mimetype, extra: { action } };
 }

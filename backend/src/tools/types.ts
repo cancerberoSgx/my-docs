@@ -4,6 +4,11 @@ export interface ToolResult {
   extra: object;
 }
 
+export interface ToolDoc {
+  id: number;
+  url: string;
+}
+
 export interface ToolImpl {
-  execute(docId: number, action: string, params: Record<string, unknown>): Promise<ToolResult>;
+  execute(doc: ToolDoc, action: string, params: Record<string, unknown>): Promise<ToolResult>;
 }
