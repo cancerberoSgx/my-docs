@@ -74,6 +74,21 @@ router.get('/documents/:docId/history', requireRole(), async (req: Request, res:
   }
 });
 
+router.get('/documents/:docId/history/:entryId', requireRole(), async (req: Request, res: Response): Promise<void> => {
+  const user = (req as AuthRequest).user;
+  try {
+    const entry = await listsService.getHistoryEntry(
+      Number(req.params.docId),
+      Number(req.params.entryId),
+      scopedUserId(user),
+    );
+    if (!entry) { res.status(404).json({ error: 'Entry not found' }); return; }
+    res.json(entry);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 router.put('/documents/:docId/status', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { toolId, action, params } = req.body;

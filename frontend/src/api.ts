@@ -239,6 +239,8 @@ export interface HistoryEntry {
   document_id: number;
   status: string;
   created_at: string;
+  action: string | null;
+  params: Record<string, unknown> | null;
   resolved_url: string | null;
   resolved_mimetype: string | null;
   resolved_extra: Record<string, unknown> | null;
@@ -252,6 +254,12 @@ export function getDocumentHistory(
   const qs = new URLSearchParams({ limit: String(params.limit), offset: String(params.offset) });
   if (params.status) qs.set('status', params.status);
   return request<{ items: HistoryEntry[]; total: number }>(`/documents/${docId}/history?${qs}`, {
+    headers: authHeaders(token),
+  });
+}
+
+export function getHistoryEntry(token: string, docId: number, entryId: number) {
+  return request<HistoryEntry>(`/documents/${docId}/history/${entryId}`, {
     headers: authHeaders(token),
   });
 }

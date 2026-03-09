@@ -32,15 +32,15 @@ export async function trigger(
   const impl = registry.get(tool.name);
   if (!impl) throw new AppError(501, `Tool '${tool.name}' has no implementation`);
 
-  await listsRepo.recordStatusChange(docId, DocumentStatus.Pending, null);
+  await listsRepo.recordStatusChange(docId, DocumentStatus.Pending, null, null, null, null, action, params);
 
   impl.execute(docId, action, params)
     .then(({ url, mimetype, extra }) =>
-      listsRepo.recordStatusChange(docId, DocumentStatus.Ready, null, url, mimetype, extra)
+      listsRepo.recordStatusChange(docId, DocumentStatus.Ready, null, url, mimetype, extra, action, params)
     )
     .catch(async (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
-      await listsRepo.recordStatusChange(docId, DocumentStatus.Error, msg);
+      await listsRepo.recordStatusChange(docId, DocumentStatus.Error, msg, null, null, null, action, params);
     });
 
   return { status: DocumentStatus.Pending };

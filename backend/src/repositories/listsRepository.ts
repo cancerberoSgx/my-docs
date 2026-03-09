@@ -104,15 +104,17 @@ export async function recordStatusChange(
   resolvedUrl?: string | null,
   resolvedMimetype?: string | null,
   resolvedExtra?: object | null,
+  action?: string | null,
+  params?: object | null,
 ): Promise<void> {
   await db.query(
     'UPDATE documents SET status = $1, status_change_error = $2 WHERE id = $3',
     [status, error, id]
   );
   await db.query(
-    `INSERT INTO document_status_history (document_id, status, resolved_url, resolved_mimetype, resolved_extra)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [id, status, resolvedUrl ?? null, resolvedMimetype ?? null, resolvedExtra ?? null]
+    `INSERT INTO document_status_history (document_id, status, resolved_url, resolved_mimetype, resolved_extra, action, params)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [id, status, resolvedUrl ?? null, resolvedMimetype ?? null, resolvedExtra ?? null, action ?? null, params ?? null]
   );
 }
 
@@ -139,6 +141,8 @@ export interface HistoryEntry {
   document_id: number;
   status: string;
   created_at: string;
+  action: string | null;
+  params: object | null;
   resolved_url: string | null;
   resolved_mimetype: string | null;
   resolved_extra: object | null;
@@ -168,6 +172,20 @@ export async function getDocumentHistory(
     [...vals, limit, offset],
   );
   return { items: rows, total: Number(count) };
+}
+
+export async function getHistoryEntry(
+  docId: number,
+  entryId: number,
+  userId: number | null,
+): Promise<HistoryEntry | null> {
+  const { rows } = await db.query<HistoryEntry>(
+    `SELECT h.* FROM document_status_history h
+     JOIN documents d ON d.id = h.document_id
+     WHERE h.id = $1 AND h.document_id = $2 AND ($3::int IS NULL OR d.user_id = $3)`,
+    [entryId, docId, userId],
+  );
+  return rows[0] ?? null;
 }
 
 export function addDocumentToList(listId: number, documentId: number): Promise<void> {

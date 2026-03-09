@@ -12,6 +12,7 @@ import AdminDocumentsPage from './components/AdminDocumentsPage';
 import AdminListsPage from './components/AdminListsPage';
 import { AdminToolsPage, AdminToolDetailPage } from './components/AdminToolsPage';
 import DocumentHistoryPage from './components/DocumentHistoryPage';
+import DocumentHistoryDetailPage from './components/DocumentHistoryDetailPage';
 import { UserRole } from './enums';
 
 function RequireRole({ role, children }: { role: UserRole; children: React.ReactNode }) {
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/lists/:listId" element={<RequireAuth><DocumentList /></RequireAuth>} />
         <Route path="/lists/:listId/documents/:docId" element={<RequireAuth><DocumentPage /></RequireAuth>} />
         <Route path="/documents/:docId/history" element={<RequireAuth><DocumentHistoryPage /></RequireAuth>} />
+        <Route path="/documents/:docId/history/:entryId" element={<RequireAuth><DocumentHistoryDetailPage /></RequireAuth>} />
         <Route path="/account" element={<RequireAuth><AccountPage /></RequireAuth>} />
         <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
         <Route path="/admin/users" element={<RequireRole role={UserRole.Root}><AdminUsersPage /></RequireRole>} />

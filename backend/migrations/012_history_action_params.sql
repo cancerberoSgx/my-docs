@@ -1,0 +1,3 @@
+ALTER TABLE document_status_history
+  ADD COLUMN IF NOT EXISTS action TEXT,
+  ADD COLUMN IF NOT EXISTS params JSONB;

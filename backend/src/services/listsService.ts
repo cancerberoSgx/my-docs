@@ -2,6 +2,7 @@ import { AppError } from '../errors';
 import * as listsRepo from '../repositories/listsRepository';
 import { DocumentStatus, DocumentType } from '../enums';
 import type { List, Doc, DocumentStatusResult, HistoryEntry } from '../repositories/listsRepository';
+export type { HistoryEntry };
 
 const VALID_ORDER_COLS = ['name', 'created_at', 'updated_at'];
 
@@ -86,6 +87,14 @@ export function getDocumentHistory(
   opts: { limit: number; offset: number; status?: string },
 ): Promise<{ items: HistoryEntry[]; total: number } | null> {
   return listsRepo.getDocumentHistory(docId, userId, opts);
+}
+
+export function getHistoryEntry(
+  docId: number,
+  entryId: number,
+  userId: number | null,
+): Promise<HistoryEntry | null> {
+  return listsRepo.getHistoryEntry(docId, entryId, userId);
 }
 
 export function detectDocumentType(url: string): { type: string; type_image: string } {

@@ -69,6 +69,7 @@ export default function DocumentHistoryPage() {
                   <tr>
                     <th>#</th>
                     <th>Status</th>
+                    <th>Action</th>
                     <th>Date</th>
                     <th>Resolved URL</th>
                     <th>Mimetype</th>
@@ -76,15 +77,22 @@ export default function DocumentHistoryPage() {
                 </thead>
                 <tbody>
                   {items.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center text-base-content/50 py-6">No history entries.</td></tr>
+                    <tr><td colSpan={6} className="text-center text-base-content/50 py-6">No history entries.</td></tr>
                   ) : items.map((entry) => (
-                    <tr key={entry.id}>
+                    <tr
+                      key={entry.id}
+                      className="hover cursor-pointer"
+                      onClick={() => navigate(`/documents/${docId}/history/${entry.id}`)}
+                    >
                       <td className="text-base-content/50 text-xs">{entry.id}</td>
                       <td><StatusBadge status={entry.status} /></td>
+                      <td className="text-xs font-mono text-base-content/70">
+                        {entry.action ?? <span className="text-base-content/30">—</span>}
+                      </td>
                       <td className="text-xs text-base-content/60 whitespace-nowrap">
                         {new Date(entry.created_at).toLocaleString()}
                       </td>
-                      <td className="max-w-xs">
+                      <td className="max-w-xs" onClick={(e) => e.stopPropagation()}>
                         {entry.resolved_url
                           ? <a href={entry.resolved_url} target="_blank" rel="noreferrer" className="link link-primary text-xs truncate block">{entry.resolved_url}</a>
                           : <span className="text-base-content/30 text-xs">—</span>}
