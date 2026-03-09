@@ -5,7 +5,7 @@ import { DocumentType, UserRole } from '../enums';
 import * as listsService from '../services/listsService';
 
 function scopedUserId(user: JwtPayload): number | null {
-  return user.role === UserRole.Root ? null : scopedUserId(user);
+  return user.role === UserRole.Root ? null : user.userId;
 }
 
 const router = Router();
@@ -61,13 +61,13 @@ router.get('/documents/:docId/status', requireRole(), async (req: Request, res: 
 
 router.put('/documents/:docId/status', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
-  const { action } = req.body;
-  if (!action || typeof action !== 'string') {
-    res.status(400).json({ error: 'action is required' });
+  const { toolId } = req.body;
+  if (!toolId || typeof toolId !== 'number') {
+    res.status(400).json({ error: 'toolId is required' });
     return;
   }
   try {
-    res.json(await listsService.triggerDocumentAction(Number(req.params.docId), scopedUserId(user), action));
+    res.json(await listsService.triggerDocumentAction(Number(req.params.docId), scopedUserId(user), toolId));
   } catch (err) {
     handleError(res, err);
   }

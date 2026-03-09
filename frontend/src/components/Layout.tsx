@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useId, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, X, LogOut, LogIn, UserPlus, User, Settings,
-  BookOpen, Home, Info, Code, ShieldCheck, Users, FileText, List,
+  BookOpen, Home, Info, Code, ShieldCheck, Users, FileText, List, Wrench,
 } from 'lucide-react';
 import { useAuthStore } from '../store';
 import { UserRole } from '../enums';
@@ -149,6 +149,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <NavItem icon={<Users size={18} />} label="Users" to="/admin/users" />
                 <NavItem icon={<FileText size={18} />} label="Documents" to="/admin/documents" />
                 <NavItem icon={<List size={18} />} label="Lists" to="/admin/lists" />
+                <NavItem icon={<Wrench size={18} />} label="Tools" to="/admin/tools" />
               </>
             )}
 

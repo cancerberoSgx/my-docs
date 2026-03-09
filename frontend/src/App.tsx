@@ -10,6 +10,7 @@ import SettingsPage from './components/SettingsPage';
 import AdminUsersPage from './components/AdminUsersPage';
 import AdminDocumentsPage from './components/AdminDocumentsPage';
 import AdminListsPage from './components/AdminListsPage';
+import { AdminToolsPage, AdminToolDetailPage } from './components/AdminToolsPage';
 import { UserRole } from './enums';
 
 function RequireRole({ role, children }: { role: UserRole; children: React.ReactNode }) {
@@ -42,6 +43,8 @@ export default function App() {
         <Route path="/admin/lists" element={<RequireRole role={UserRole.Root}><AdminListsPage /></RequireRole>} />
         <Route path="/admin/lists/:listId" element={<RequireRole role={UserRole.Root}><DocumentList /></RequireRole>} />
         <Route path="/admin/lists/:listId/documents/:docId" element={<RequireRole role={UserRole.Root}><DocumentPage /></RequireRole>} />
+        <Route path="/admin/tools" element={<RequireRole role={UserRole.Root}><AdminToolsPage /></RequireRole>} />
+        <Route path="/admin/tools/:toolId" element={<RequireRole role={UserRole.Root}><AdminToolDetailPage /></RequireRole>} />
         <Route path="*" element={<Navigate to="/lists" replace />} />
       </Routes>
     </Layout>

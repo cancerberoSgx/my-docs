@@ -234,10 +234,36 @@ export function deleteAccount(token: string, password: string) {
   });
 }
 
-export function triggerDocumentAction(token: string, docId: number, action: string) {
+export function triggerDocumentAction(token: string, docId: number, toolId: number) {
   return request<{ status: string }>(`/documents/${docId}/status`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ action }),
+    body: JSON.stringify({ toolId }),
   });
+}
+
+// ── Tools ─────────────────────────────────────────────────────────────────────
+
+export interface Tool {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface ToolWithTypes extends Tool {
+  documentTypes: string[];
+}
+
+export function getToolsByType(token: string, documentType: string) {
+  return request<Tool[]>(`/tools?documentType=${encodeURIComponent(documentType)}`, {
+    headers: authHeaders(token),
+  });
+}
+
+export function getAllTools(token: string) {
+  return request<ToolWithTypes[]>('/tools', { headers: authHeaders(token) });
+}
+
+export function getTool(token: string, toolId: number) {
+  return request<ToolWithTypes>(`/tools/${toolId}`, { headers: authHeaders(token) });
 }

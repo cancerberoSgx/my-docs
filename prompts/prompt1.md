@@ -322,3 +322,23 @@ backend: only the root user can change other users. An admin uuser can only edit
 
 * a root user, in the lists listing, can click a list and see its details, reuse current list page
 * a root user, in the documents list, can click a document and see its details. Reuse current document details page
+
+
+# prompt: doc tools
+
+there are documentTools which given a url or other document description, takes care of facilitating its content and processing somehow.
+For example, a webpage document can be extracted its text or a text audio generation, a youtube document can extract the video file or audio file, etc
+Model db tools table, columns:
+ * id (pk)
+ * name
+ * description
+ 
+create toolsDocumentType relation table, which defines to which document type a tool can be applied. columns: tool_id (fk) documentType: str
+create these tools records
+ * youtube-audio
+ * youtube-video
+ * webpage-text
+
+ the root user have a "tools" menu where he can list all tools and clicking a tool opens the tool screen shoing its details and which documents it applies. root cannot add, edit  or remove tool, that can only be done by a developer since they requires an implkementation code
+
+on current change document status endpoint, the client myust pass the toolId. In the UI, instead of displaying document status and "prepare" action buttons, display this information for the list of tools that apply to the document type

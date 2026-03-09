@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, Doc, DocumentStatus as DocumentStatusShape } from '../api';
-import { DocumentStatus, DocumentType, DocumentAction } from '../enums';
+import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, getToolsByType, Doc, DocumentStatus as DocumentStatusShape, Tool } from '../api';
+import { DocumentStatus } from '../enums';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
 import { StatusBadge } from './StatusBadge';
@@ -28,7 +28,8 @@ export default function DocumentPage() {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [resolvedMimetype, setResolvedMimetype] = useState<string | null>(null);
   const [resolvedExtra, setResolvedExtra] = useState<Record<string, unknown> | null>(null);
-  const [preparing, setPreparing] = useState(false);
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [runningTool, setRunningTool] = useState<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function applyStatus(s: DocumentStatusShape) {
@@ -54,6 +55,7 @@ export default function DocumentPage() {
         setTypeImage(d.type_image);
         setStatus(d.status);
         setStatusError(d.status_change_error);
+        getToolsByType(token, d.type).then(setTools).catch(() => {});
         // fetch resolved data from status history
         return getDocumentStatus(token, d.id).then(applyStatus).catch(() => {});
       })
@@ -95,12 +97,12 @@ export default function DocumentPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [status, token, docId]);
 
-  function handlePrepare() {
-    setPreparing(true);
-    triggerDocumentAction(token, Number(docId), DocumentAction.Load)
+  function handleRunTool(toolId: number) {
+    setRunningTool(toolId);
+    triggerDocumentAction(token, Number(docId), toolId)
       .then(({ status: s }) => { setStatus(s); })
       .catch((err) => setStatusError(err.message))
-      .finally(() => setPreparing(false));
+      .finally(() => setRunningTool(null));
   }
 
   function handleSave(e: React.FormEvent) {
@@ -168,15 +170,6 @@ export default function DocumentPage() {
               </div>
               <div className="flex items-center gap-2">
                 {status && <StatusBadge status={status} />}
-                {doc?.type === DocumentType.Youtube && (status === DocumentStatus.Empty || status === DocumentStatus.Ready) && (
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={handlePrepare}
-                    disabled={preparing}
-                  >
-                    {preparing ? <span className="loading loading-spinner loading-xs" /> : 'Prepare'}
-                  </button>
-                )}
               </div>
             </div>
             {status === DocumentStatus.Error && statusError && (
@@ -193,6 +186,30 @@ export default function DocumentPage() {
                     {JSON.stringify(resolvedExtra, null, 2)}
                   </pre>
                 )}
+              </div>
+            )}
+
+            {/* Tools */}
+            {tools.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-base-content/50">Tools</p>
+                {tools.map((tool) => (
+                  <div key={tool.id} className="flex items-center justify-between gap-3 py-1">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{tool.name}</p>
+                      <p className="text-xs text-base-content/60">{tool.description}</p>
+                    </div>
+                    <button
+                      className="btn btn-sm btn-outline shrink-0"
+                      onClick={() => handleRunTool(tool.id)}
+                      disabled={runningTool !== null || status === DocumentStatus.Pending}
+                    >
+                      {runningTool === tool.id
+                        ? <span className="loading loading-spinner loading-xs" />
+                        : 'Run'}
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
