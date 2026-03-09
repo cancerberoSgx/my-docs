@@ -234,6 +234,28 @@ export function deleteAccount(token: string, password: string) {
   });
 }
 
+export interface HistoryEntry {
+  id: number;
+  document_id: number;
+  status: string;
+  created_at: string;
+  resolved_url: string | null;
+  resolved_mimetype: string | null;
+  resolved_extra: Record<string, unknown> | null;
+}
+
+export function getDocumentHistory(
+  token: string,
+  docId: number,
+  params: { limit: number; offset: number; status?: string },
+) {
+  const qs = new URLSearchParams({ limit: String(params.limit), offset: String(params.offset) });
+  if (params.status) qs.set('status', params.status);
+  return request<{ items: HistoryEntry[]; total: number }>(`/documents/${docId}/history?${qs}`, {
+    headers: authHeaders(token),
+  });
+}
+
 export function triggerDocumentAction(
   token: string,
   docId: number,

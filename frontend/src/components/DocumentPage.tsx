@@ -151,14 +151,19 @@ export default function DocumentPage() {
           <button className="btn btn-ghost btn-sm" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <a
-            href={url || doc?.url}
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-ghost btn-sm gap-1"
-          >
-            Open ↗
-          </a>
+          <div className="flex items-center gap-2">
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/documents/${docId}/history`)}>
+              History
+            </button>
+            <a
+              href={url || doc?.url}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-ghost btn-sm gap-1"
+            >
+              Open ↗
+            </a>
+          </div>
         </div>
 
         <div className="card bg-base-100 shadow">

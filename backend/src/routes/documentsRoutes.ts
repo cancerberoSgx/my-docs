@@ -60,6 +60,20 @@ router.get('/documents/:docId/status', requireRole(), async (req: Request, res: 
   }
 });
 
+router.get('/documents/:docId/history', requireRole(), async (req: Request, res: Response): Promise<void> => {
+  const user = (req as AuthRequest).user;
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+  const status = req.query.status ? String(req.query.status) : undefined;
+  try {
+    const result = await listsService.getDocumentHistory(Number(req.params.docId), scopedUserId(user), { limit, offset, status });
+    if (!result) { res.status(404).json({ error: 'Document not found' }); return; }
+    res.json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 router.put('/documents/:docId/status', requireRole(), async (req: Request, res: Response): Promise<void> => {
   const user = (req as AuthRequest).user;
   const { toolId, action, params } = req.body;

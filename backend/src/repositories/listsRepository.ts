@@ -134,6 +134,42 @@ export async function getDocumentStatus(id: number, userId: number | null): Prom
   return rows[0] ?? null;
 }
 
+export interface HistoryEntry {
+  id: number;
+  document_id: number;
+  status: string;
+  created_at: string;
+  resolved_url: string | null;
+  resolved_mimetype: string | null;
+  resolved_extra: object | null;
+}
+
+export async function getDocumentHistory(
+  docId: number,
+  userId: number | null,
+  { limit, offset, status }: { limit: number; offset: number; status?: string },
+): Promise<{ items: HistoryEntry[]; total: number } | null> {
+  const access = await db.query(
+    'SELECT id FROM documents WHERE id = $1 AND ($2::int IS NULL OR user_id = $2)',
+    [docId, userId],
+  );
+  if (!access.rows[0]) return null;
+
+  const vals: unknown[] = [docId];
+  const conds = ['document_id = $1'];
+  if (status) { vals.push(status); conds.push(`status = $${vals.length}`); }
+  const where = `WHERE ${conds.join(' AND ')}`;
+
+  const { rows: [{ count }] } = await db.query<{ count: string }>(
+    `SELECT COUNT(*) FROM document_status_history ${where}`, vals,
+  );
+  const { rows } = await db.query<HistoryEntry>(
+    `SELECT * FROM document_status_history ${where} ORDER BY created_at DESC LIMIT $${vals.length + 1} OFFSET $${vals.length + 2}`,
+    [...vals, limit, offset],
+  );
+  return { items: rows, total: Number(count) };
+}
+
 export function addDocumentToList(listId: number, documentId: number): Promise<void> {
   return db.query(
     'INSERT INTO lists_documents (list_id, document_id) VALUES ($1, $2)',

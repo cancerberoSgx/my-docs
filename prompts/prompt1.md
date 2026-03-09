@@ -355,4 +355,6 @@ in PUT /api/documents/3/status there'a a ToolsService that handle the call and r
 implement each tool in a separate implementation file, for now they only sleep 5 seconds
 
 
-# prompt
+# prompt: doc status history list
+
+in the document page, there's a document which takes me to document status changelog which list all documentStatusHistory records with pagination and status filtering, displaying dates and status change in a table. default order is createdAt DESC
