@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, getToolsByType, Doc, DocumentStatus as DocumentStatusShape, ToolFull } from '../api';
+import { getDocument, updateDocument, getDocumentType, getDocumentStatus, triggerDocumentAction, getToolsByType, getToolResults, Doc, DocumentStatus as DocumentStatusShape, ToolFull } from '../api';
 import { DocumentStatus } from '../enums';
 import { useAuthStore } from '../store';
 import { DocTypeBadge } from './DocTypeIcon';
@@ -25,19 +25,17 @@ export default function DocumentPage() {
 
   const [status, setStatus] = useState('');
   const [statusError, setStatusError] = useState<string | null>(null);
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
-  const [resolvedMimetype, setResolvedMimetype] = useState<string | null>(null);
-  const [resolvedExtra, setResolvedExtra] = useState<Record<string, unknown> | null>(null);
   const [tools, setTools] = useState<ToolFull[]>([]);
+  const [toolResults, setToolResults] = useState<Record<string, string>>({});
   const [runningKey, setRunningKey] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function applyStatus(s: DocumentStatusShape) {
     setStatus(s.status);
     setStatusError(s.status_change_error);
-    setResolvedUrl(s.resolved_url);
-    setResolvedMimetype(s.resolved_mimetype);
-    setResolvedExtra(s.resolved_extra);
+    if (s.status === DocumentStatus.Ready) {
+      getToolResults(token, Number(docId)).then(setToolResults).catch(() => {});
+    }
   }
 
   const [saving, setSaving] = useState(false);
@@ -56,7 +54,7 @@ export default function DocumentPage() {
         setStatus(d.status);
         setStatusError(d.status_change_error);
         getToolsByType(token, d.type).then(setTools).catch(() => {});
-        // fetch resolved data from status history
+        getToolResults(token, d.id).then(setToolResults).catch(() => {});
         return getDocumentStatus(token, d.id).then(applyStatus).catch(() => {});
       })
       .catch((err) => {
@@ -181,48 +179,47 @@ export default function DocumentPage() {
             {status === DocumentStatus.Error && statusError && (
               <p className="text-error text-xs">{statusError}</p>
             )}
-            {status === DocumentStatus.Ready && resolvedUrl && (
-              <div className="text-xs text-base-content/60 flex flex-col gap-0.5">
-                <a href={resolvedUrl} target="_blank" rel="noreferrer" className="link link-primary truncate">
-                  {resolvedUrl}
-                </a>
-                {resolvedMimetype && <span>{resolvedMimetype}</span>}
-                {resolvedExtra && Object.keys(resolvedExtra).length > 0 && (
-                  <pre className="bg-base-200 rounded p-2 text-xs overflow-x-auto">
-                    {JSON.stringify(resolvedExtra, null, 2)}
-                  </pre>
-                )}
-              </div>
-            )}
 
             {/* Tools */}
             {tools.length > 0 && (
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-base-content/50">Tools</p>
                 {tools.map((tool) => (
-                  <div key={tool.id} className="flex items-start justify-between gap-3 py-1">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{tool.name}</p>
-                      <p className="text-xs text-base-content/60">{tool.description}</p>
+                  <div key={tool.id} className="flex flex-col gap-1 py-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{tool.name}</p>
+                        <p className="text-xs text-base-content/60">{tool.description}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1 shrink-0">
+                        {tool.actions.map((act) => {
+                          const key = `${tool.id}:${act.name}`;
+                          return (
+                            <button
+                              key={act.name}
+                              className="btn btn-xs btn-outline"
+                              title={act.description}
+                              onClick={() => handleRunTool(tool.id, act.name)}
+                              disabled={runningKey !== null || status === DocumentStatus.Pending}
+                            >
+                              {runningKey === key
+                                ? <span className="loading loading-spinner loading-xs" />
+                                : act.name}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1 shrink-0">
-                      {tool.actions.map((act) => {
-                        const key = `${tool.id}:${act.name}`;
-                        return (
-                          <button
-                            key={act.name}
-                            className="btn btn-xs btn-outline"
-                            title={act.description}
-                            onClick={() => handleRunTool(tool.id, act.name)}
-                            disabled={runningKey !== null || status === DocumentStatus.Pending}
-                          >
-                            {runningKey === key
-                              ? <span className="loading loading-spinner loading-xs" />
-                              : act.name}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {toolResults[tool.name] && (
+                      <a
+                        href={toolResults[tool.name]}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link link-primary text-xs truncate"
+                      >
+                        {toolResults[tool.name]}
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>

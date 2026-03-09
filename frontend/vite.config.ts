@@ -8,6 +8,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': 'http://localhost:3001',
+      '/media': 'http://localhost:3001',
     },
   },
 });

@@ -373,3 +373,8 @@ First, we want a facade on FileSystem, which allows us to save the buffer and th
 lets implement a local file storage that will just save downloaded resources into localhost. in the future we could have a aws s3 bucket or something else
 
 the local file storage implementation, ends up using backend/src/integrations/youtube/index.ts to download the file. You need to model a local storage or file tracking so we can know where the file url is generated locally and serve it as a public url so the frontend can access the audio file.
+
+
+# prompt: document details file links
+
+in document details of youtube type document, I need to see the generated url for each tool, for example a link to the mp4 in the "video" tool and a link to the .m4a file in the "audio" tool. Dont show the json action. 

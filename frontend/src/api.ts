@@ -258,6 +258,19 @@ export function getDocumentHistory(
   });
 }
 
+export function getToolResults(token: string, docId: number): Promise<Record<string, string>> {
+  return getDocumentHistory(token, docId, { limit: 100, offset: 0, status: 'ready' }).then(({ items }) => {
+    const map: Record<string, string> = {};
+    for (const entry of items) {
+      const toolName = (entry.resolved_extra as Record<string, unknown> | null)?.tool;
+      if (typeof toolName === 'string' && entry.resolved_url && !(toolName in map)) {
+        map[toolName] = entry.resolved_url;
+      }
+    }
+    return map;
+  });
+}
+
 export function getHistoryEntry(token: string, docId: number, entryId: number) {
   return request<HistoryEntry>(`/documents/${docId}/history/${entryId}`, {
     headers: authHeaders(token),

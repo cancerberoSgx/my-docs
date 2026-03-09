@@ -4,7 +4,7 @@ import { download } from '../integrations/youtube';
 import type { FileStorage, Resource, StorageDocument, StorageTool } from './types';
 
 const MEDIA_DIR = process.env.MEDIA_DIR ?? path.resolve(process.cwd(), 'media');
-const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3001';
+// const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3001';
 
 function ensureMediaDir(): void {
   if (!fs.existsSync(MEDIA_DIR)) {
@@ -40,7 +40,7 @@ export const localFileStorage: FileStorage = {
     }
 
     return {
-      url: `${BACKEND_URL}/media/${filename}`,
+      url: `/media/${filename}`,
       mimetype: config.mimetype,
     };
   },
